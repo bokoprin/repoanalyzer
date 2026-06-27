@@ -61,6 +61,16 @@ def _intent(question: str, *, has_claims: bool) -> str:
     q = question.lower()
     if has_claims:
         return "claim_verification"
+    if (("descriptor" in q or "ディスクリプタ" in question or "configuration descriptor" in q)
+        and ("tinyusb" in q or "cdc" in q or "msc" in q or "hid" in q or "TinyUSB" in question)):
+        return "tinyusb_descriptor_trace"
+    if (("dcd_event_handler" in q and "tud_task" in q)
+        or ("event" in q and "queue" in q and "tinyusb" in q)
+        or ("イベント" in question and "キュー" in question and "TinyUSB" in question)):
+        return "tinyusb_device_event_queue_trace"
+    if (("xfer_cb" in q or "dispatch" in q or "ディスパッチ" in question)
+        and ("endpoint" in q or "transfer" in q or "転送" in question or "完了" in question)):
+        return "tinyusb_endpoint_xfer_dispatch_trace"
     if "path" in q or "call path" in q or "reaches" in q or "到達" in question:
         return "call_path"
     if "caller" in q or "called from" in q or "呼ばれる" in question:

@@ -57,6 +57,16 @@ def _intent(question: str) -> str:
         return "undo_edit_execution"
     if ("検索" in question and ("実行" in question or "どう" in question)) or "how is search executed" in q:
         return "search_execution"
+    if (("descriptor" in q or "ディスクリプタ" in question or "configuration descriptor" in q)
+        and ("tinyusb" in q or "cdc" in q or "msc" in q or "hid" in q or "TinyUSB" in question)):
+        return "tinyusb_descriptor_trace"
+    if (("dcd_event_handler" in q and "tud_task" in q)
+        or ("event" in q and "queue" in q and "tinyusb" in q)
+        or ("イベント" in question and "キュー" in question and "TinyUSB" in question)):
+        return "tinyusb_device_event_queue_trace"
+    if (("xfer_cb" in q or "dispatch" in q or "ディスパッチ" in question)
+        and ("endpoint" in q or "transfer" in q or "転送" in question or "完了" in question)):
+        return "tinyusb_endpoint_xfer_dispatch_trace"
     if "到達" in question or "path" in q or "call path" in q or "最終的" in question:
         return "call_path"
     if "呼ばれる" in question or "caller" in q or "called from" in q:
@@ -1049,6 +1059,88 @@ def _undo_edit_execution_facts(repo: str | Path) -> list[CodeFact]:
     return unique
 
 
+
+def _active_tinyusb_facts(repo: str | Path, fact_types: set[str]) -> list[CodeFact]:
+    store = open_store(repo)
+    facts: list[CodeFact] = []
+    for fact_type in sorted(fact_types):
+        facts.extend(store.query_facts(active_fact_where(f"fact_type='{fact_type}'")))
+    return facts
+
+
+def _tinyusb_descriptor_trace_facts(repo: str | Path) -> list[CodeFact]:
+    facts = _active_tinyusb_facts(repo, {"usb_descriptor", "tinyusb_callback", "tinyusb_class_protocol"})
+    selected: list[CodeFact] = []
+    for fact in facts:
+        if fact.fact_type == "usb_descriptor":
+            descriptor_macro = str(fact.payload.get("descriptor_macro") or "")
+            usb_class = str(fact.payload.get("usb_class") or fact.payload.get("class") or "")
+            descriptor_kind = str(fact.payload.get("descriptor_kind") or fact.object or "")
+            if descriptor_kind in {"configuration", "device"} or descriptor_macro in {"TUD_CONFIG_DESCRIPTOR", "TUD_CDC_DESCRIPTOR", "TUD_MSC_DESCRIPTOR", "TUD_HID_DESCRIPTOR"} or usb_class in {"CDC", "MSC", "HID"}:
+                selected.append(fact)
+        elif fact.fact_type == "tinyusb_callback":
+            if fact.subject in {"tud_descriptor_device_cb", "tud_descriptor_configuration_cb", "tud_hid_descriptor_report_cb"}:
+                selected.append(fact)
+        elif fact.fact_type == "tinyusb_class_protocol":
+            if fact.predicate == "declares_hid_report_descriptor_map":
+                selected.append(fact)
+    return _dedupe_facts(selected)
+
+
+def _tinyusb_device_event_queue_trace_facts(repo: str | Path) -> list[CodeFact]:
+    facts = _active_tinyusb_facts(repo, {"tinyusb_device_runtime", "call"})
+    wanted_predicates = {
+        "dcd_event_producer",
+        "defers_dcd_event_to_task_queue",
+        "declares_osal_event_queue",
+        "osal_queue_send",
+        "osal_queue_receive",
+        "consumes_dcd_event_queue",
+        "endpoint_transfer_complete_event",
+    }
+    selected: list[CodeFact] = []
+    for fact in facts:
+        if fact.fact_type == "tinyusb_device_runtime" and fact.predicate in wanted_predicates:
+            selected.append(fact)
+        elif fact.fact_type == "call":
+            if name_matches(fact.caller, "dcd_event_handler") or name_matches(fact.caller, "tud_task") or name_matches(fact.callee, "dcd_event_handler") or name_matches(fact.callee, "tud_task"):
+                selected.append(fact)
+    return _dedupe_facts(selected)
+
+
+def _tinyusb_endpoint_xfer_dispatch_trace_facts(repo: str | Path) -> list[CodeFact]:
+    facts = _active_tinyusb_facts(repo, {"tinyusb_driver_dispatch", "tinyusb_device_runtime"})
+    wanted_driver_predicates = {
+        "declares_endpoint_driver_map",
+        "binds_driver_to_endpoint_interface_maps",
+        "indirect_dispatches_to_driver_callback",
+        "binds_driver_callback",
+    }
+    wanted_runtime_predicates = {
+        "endpoint_transfer_submit",
+        "endpoint_transfer_complete_event",
+        "endpoint_release",
+    }
+    selected: list[CodeFact] = []
+    for fact in facts:
+        if fact.fact_type == "tinyusb_driver_dispatch" and fact.predicate in wanted_driver_predicates:
+            selected.append(fact)
+        elif fact.fact_type == "tinyusb_device_runtime" and fact.predicate in wanted_runtime_predicates:
+            selected.append(fact)
+    return _dedupe_facts(selected)
+
+
+def _dedupe_facts(facts: list[CodeFact]) -> list[CodeFact]:
+    seen: set[tuple] = set()
+    unique: list[CodeFact] = []
+    for fact in facts:
+        key = (fact.fact_type, fact.path, fact.start_line, fact.subject, fact.predicate, fact.object, tuple(fact.route))
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(fact)
+    return unique
+
 def _semantic_relations_for_symbol(repo: str | Path, symbol: str) -> list[CodeFact]:
     store = open_store(repo)
     relations = store.query_facts(active_fact_where("fact_type='relation'"))
@@ -1092,7 +1184,22 @@ def collect_evidence(repo: str | Path, question: str, *, mode: str | None = None
     facts: list[CodeFact] = []
     unknowns: list[UnknownFact] = []
 
-    if interpreted == "search_execution":
+    if interpreted == "tinyusb_descriptor_trace":
+        facts.extend(_tinyusb_descriptor_trace_facts(repo))
+        if not facts:
+            unknowns.append(call_graph_incomplete("No TinyUSB descriptor trace facts were found in the current index."))
+
+    elif interpreted == "tinyusb_device_event_queue_trace":
+        facts.extend(_tinyusb_device_event_queue_trace_facts(repo))
+        if not facts:
+            unknowns.append(call_graph_incomplete("No TinyUSB DCD event queue trace facts were found in the current index."))
+
+    elif interpreted == "tinyusb_endpoint_xfer_dispatch_trace":
+        facts.extend(_tinyusb_endpoint_xfer_dispatch_trace_facts(repo))
+        if not facts:
+            unknowns.append(call_graph_incomplete("No TinyUSB endpoint transfer dispatch trace facts were found in the current index."))
+
+    elif interpreted == "search_execution":
         facts.extend(_search_execution_facts(repo))
         if not facts:
             unknowns.append(call_graph_incomplete("No search execution trace was found from command dispatch to search core."))

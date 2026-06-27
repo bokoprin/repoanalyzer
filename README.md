@@ -389,3 +389,14 @@ checks, privilege boundaries, port assembly, and secure context boundaries.  The
 relations are emitted as safe-unknown-aware evidence and propagated into answer
 contracts so final answers do not overclaim behavior beyond target-profile,
 startup, assembly, vector-table, or MPU-region evidence.
+
+## TinyUSB MCP E2E setup
+
+Batch 10 adds an operational TinyUSB MCP E2E path.  Use it to index a real TinyUSB checkout for one representative target profile, then connect an LLM client to the repoanalyzer MCP server.
+
+```bash
+python -m repoanalyzer.cli tinyusb-upstream-index /path/to/tinyusb --profile tinyusb_upstream_device_cdc_msc
+python -m repoanalyzer.mcp.server --repo /path/to/tinyusb
+```
+
+See `docs/MCP_TINYUSB_E2E.md` for setup steps, Cline configuration, and golden questions.  See `docs/LLM_REPOANALYZER_USAGE_RULES.md` for the LLM-side rules: collect evidence, read the cited file ranges, and preserve supported / conditional / unknown / unsupported distinctions before answering.

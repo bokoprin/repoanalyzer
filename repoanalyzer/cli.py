@@ -27,7 +27,7 @@ from repoanalyzer.workflow.session_log import read_workflow_sessions
 from repoanalyzer.workflow_eval.report import render_json as render_workflow_json, render_text as render_workflow_text
 from repoanalyzer.workflow_eval.runner import run_workflow_eval
 from repoanalyzer.real_repo_eval.runner import run_real_repo_eval
-from repoanalyzer.real_repo_eval.tinyusb_upstream import prepare_tinyusb_upstream_smoke, run_tinyusb_upstream_smoke
+from repoanalyzer.real_repo_eval.tinyusb_upstream import index_tinyusb_upstream, prepare_tinyusb_upstream_smoke, run_tinyusb_upstream_smoke
 from repoanalyzer.real_repo_eval.report import render_json as render_real_repo_json, render_text as render_real_repo_text
 from repoanalyzer.snapshot.generator import generate_snapshot
 from repoanalyzer.snapshot.traceability import generate_traceability_report
@@ -234,6 +234,19 @@ def tinyusb_upstream_smoke_prepare_cmd(
     """Generate target profiles and real-repo-eval cases for a TinyUSB upstream checkout."""
     plan = prepare_tinyusb_upstream_smoke(repo, output_dir)
     typer.echo(json.dumps(plan.to_dict(), ensure_ascii=False, indent=2))
+
+
+@app.command("tinyusb-upstream-index")
+def tinyusb_upstream_index_cmd(
+    repo: Path,
+    output_dir: Path = typer.Option(Path(".repoanalyzer-smoke"), "--output-dir", "-o"),
+    profile: str = typer.Option("tinyusb_upstream_device_cdc_msc", "--profile", "-p", help="Profile id to index for MCP use."),
+) -> None:
+    """Prepare one TinyUSB upstream profile and build the index used by the MCP server."""
+    result = index_tinyusb_upstream(repo, output_dir=output_dir, profile=profile)
+    typer.echo(json.dumps(result, ensure_ascii=False, indent=2))
+    if not result.get("ok"):
+        raise typer.Exit(code=1)
 
 
 @app.command("tinyusb-upstream-smoke")

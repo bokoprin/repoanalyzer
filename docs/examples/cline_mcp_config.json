@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "repoanalyzer-tinyusb": {
+      "command": "C:\\Users\\bokop\\OneDrive\\デスクトップ\\repoanalyzer\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "repoanalyzer.mcp.server",
+        "--repo",
+        "C:\\Users\\bokop\\OneDrive\\デスクトップ\\tinyusb"
+      ],
+      "env": {}
+    }
+  }
+}

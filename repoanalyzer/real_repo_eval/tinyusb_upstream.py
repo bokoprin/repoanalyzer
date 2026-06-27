@@ -8,6 +8,10 @@ import yaml
 import json
 
 from repoanalyzer.real_repo_eval.runner import run_real_repo_eval
+from repoanalyzer.cpp.ingest import ingest_repo
+from repoanalyzer.store.status import repo_index_status
+from repoanalyzer.store.diagnostics import query_diagnostics
+from repoanalyzer.workflow.preflight import preflight
 
 
 @dataclass(frozen=True)
@@ -96,6 +100,60 @@ def run_tinyusb_upstream_smoke(
         "reports": reports,
     }
 
+
+
+def index_tinyusb_upstream(
+    repo: str | Path,
+    output_dir: str | Path = ".repoanalyzer-smoke",
+    profile: str = "tinyusb_upstream_device_cdc_msc",
+) -> dict[str, Any]:
+    """Prepare one TinyUSB upstream profile and build a repoanalyzer index for MCP use.
+
+    Unlike ``run_tinyusb_upstream_smoke``, this is an operational setup helper:
+    it writes the selected profile files, runs a normal full ingest, and returns
+    index/preflight metadata that an MCP client can check before answering code
+    questions.
+    """
+
+    plan = prepare_tinyusb_upstream_smoke(repo, output_dir)
+    selected = _select_profile(plan, profile)
+    if not selected.expected_sources:
+        raise ValueError(f"profile {profile!r} did not match any existing TinyUSB source files under {plan.root}")
+
+    config_path = plan.root / selected.config_path
+    ingest_result = ingest_repo(plan.root, config_path=config_path, reset=True)
+    status = repo_index_status(plan.root, config_path=config_path)
+    diagnostics = query_diagnostics(plan.root)
+    readiness = preflight(plan.root)
+    return {
+        "schema_version": "tinyusb_upstream_index_report.v1",
+        "ok": ingest_result.status == "indexed" and not ingest_result.full_reingest_required and readiness.safety_level in {"ready", "caution"} and not readiness.required_actions,
+        "root": str(plan.root),
+        "output_dir": str(plan.output_dir),
+        "profile": selected.to_dict(),
+        "config_path": selected.config_path.as_posix(),
+        "case_path": selected.case_path.as_posix(),
+        "compile_commands_path": selected.compile_commands_path.as_posix(),
+        "ingest": ingest_result.__dict__,
+        "repo_status": status.to_dict(),
+        "diagnostics": diagnostics.to_dict(),
+        "preflight": readiness.to_dict(),
+        "mcp_server_command": [
+            "python",
+            "-m",
+            "repoanalyzer.mcp.server",
+            "--repo",
+            str(plan.root),
+        ],
+    }
+
+
+def _select_profile(plan: TinyUsbSmokePlan, profile_id: str) -> TinyUsbSmokeProfile:
+    for profile in plan.profiles:
+        if profile.id == profile_id:
+            return profile
+    available = ", ".join(profile.id for profile in plan.profiles)
+    raise ValueError(f"unknown TinyUSB upstream profile {profile_id!r}; available profiles: {available}")
 
 def _write_device_cdc_msc(root: Path, out: Path) -> TinyUsbSmokeProfile:
     profile_id = "tinyusb_upstream_device_cdc_msc"
