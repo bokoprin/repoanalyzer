@@ -1,0 +1,14 @@
+cases:
+  - id: semantic_overload_member_callbacks_001
+    question: "set_mode はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: app::setup
+          callee: set_mode
+          payload_contains:
+            resolution_status: ambiguous
+    answerability: partial
+    required_unknowns:
+      - ambiguous_overload_resolution

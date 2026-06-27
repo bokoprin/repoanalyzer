@@ -1,0 +1,39 @@
+cpp:
+  target_profile:
+    name: tinyusb-host-cdc-msc-hid-stm32f407disco-none
+    compile_commands: compile_commands.json
+    board: stm32f407disco
+    rtos: none
+    usb_role: host
+    example: examples/host/cdc_msc_hid
+    mcu: OPT_MCU_STM32F4
+    speed: full-speed
+    include_dirs:
+      - .
+      - src
+      - src/common
+      - src/host
+      - src/osal
+      - src/class/cdc
+      - src/class/msc
+      - src/class/hid
+      - examples/host/cdc_msc_hid/src
+      - hw
+    macros:
+      - CFG_TUSB_MCU=OPT_MCU_STM32F4
+      - CFG_TUSB_OS=OPT_OS_NONE
+      - BOARD_TUH_RHPORT=0
+      - BOARD_TUH_MAX_SPEED=OPT_MODE_FULL_SPEED
+      - BOARD_STM32F407DISCO=1
+    config_headers:
+      - examples/host/cdc_msc_hid/src/tusb_config.h
+    active_path_prefixes:
+      - src
+      - examples/host/cdc_msc_hid/src
+      - hw/bsp
+    inactive_path_prefixes:
+      - examples/device
+      - examples/dual
+      - examples/typec
+      - test
+    active_port: src/portable/synopsys/dwc2

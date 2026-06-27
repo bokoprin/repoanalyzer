@@ -1,0 +1,17 @@
+cases:
+  - id: semantic_virtual_dispatch_001
+    question: "app::Base::run はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: app::dispatch
+          callee: app::Base::run
+          call_kind: virtual_candidate
+          payload_list_contains:
+            candidate_qualified_names: app::A::run
+      required_constraints_contains:
+        - Virtual dispatch candidates depend on runtime receiver type
+    answerability: partial
+    required_unknowns:
+      - virtual_dispatch_candidates

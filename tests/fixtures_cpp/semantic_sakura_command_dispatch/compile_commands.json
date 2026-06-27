@@ -1,0 +1,3 @@
+[
+  {"directory": ".", "command": "c++ -Iinclude -c src/command_dispatch.cpp", "file": "src/command_dispatch.cpp"}
+]

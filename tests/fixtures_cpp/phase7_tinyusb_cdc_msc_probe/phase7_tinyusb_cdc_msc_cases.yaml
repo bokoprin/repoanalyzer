@@ -1,0 +1,811 @@
+id: phase7_tinyusb_device_cdc_msc_profile_probe
+description: TinyUSB device cdc_msc target-profile and compact real-repo-eval probe.
+ingest:
+  enabled: true
+  config: repoanalyzer.yml
+budgets:
+  max_total_ms: 20000
+  max_facts: 1500
+  max_indexed_files: 20
+expect:
+  ingest:
+    status: indexed
+    min_files: 9
+    min_facts: 80
+  repo_status:
+    clean: true
+  diagnostics:
+    min_total_facts: 80
+    min_indexed_files: 17
+    max_warnings: 0
+scenarios:
+  - id: tinyusb_target_profile_name
+    kind: verify_claim
+    claim:
+      claim_type: target_profile
+      subject: name
+      object: tinyusb-device-cdc-msc-stm32f407disco-none
+    expect:
+      verdict: supported
+      reason_code: target_profile_supported
+      supporting_must_include:
+        - fact_type: target_profile
+          predicate: selected_profile
+          subject: tinyusb-device-cdc-msc-stm32f407disco-none
+
+  - id: tinyusb_target_profile_board
+    kind: verify_claim
+    claim:
+      claim_type: target_profile
+      subject: board
+      object: stm32f407disco
+    expect:
+      verdict: supported
+      reason_code: target_profile_supported
+      supporting_must_include:
+        - fact_type: target_profile
+          predicate: target_attribute
+          subject: board
+          object: stm32f407disco
+
+  - id: tinyusb_target_profile_role
+    kind: verify_claim
+    claim:
+      claim_type: target_profile
+      subject: usb_role
+      object: device
+    expect:
+      verdict: supported
+      reason_code: target_profile_supported
+      supporting_must_include:
+        - fact_type: target_profile
+          predicate: target_attribute
+          subject: usb_role
+          object: device
+
+  - id: tinyusb_target_profile_active_port
+    kind: verify_claim
+    claim:
+      claim_type: target_profile
+      subject: active_port
+      object: src/portable/synopsys/dwc2
+    expect:
+      verdict: supported
+      reason_code: target_profile_supported
+      supporting_must_include:
+        - fact_type: target_profile
+          predicate: target_attribute
+          subject: active_port
+          object: src/portable/synopsys/dwc2
+
+  - id: tinyusb_build_config_cdc_enabled
+    kind: verify_claim
+    claim:
+      claim_type: build_config
+      subject: CFG_TUD_CDC
+      object: "1"
+    expect:
+      verdict: supported
+      reason_code: build_config_macro_value_supported
+      supporting_must_include:
+        - fact_type: build_config
+          predicate: macro_value
+          subject: CFG_TUD_CDC
+          object: "1"
+
+  - id: tinyusb_build_config_msc_enabled
+    kind: verify_claim
+    claim:
+      claim_type: build_config
+      subject: CFG_TUD_MSC
+      object: "1"
+    expect:
+      verdict: supported
+      reason_code: build_config_macro_value_supported
+      supporting_must_include:
+        - fact_type: build_config
+          predicate: macro_value
+          subject: CFG_TUD_MSC
+          object: "1"
+
+  - id: tinyusb_build_config_hid_inactive
+    kind: verify_claim
+    claim:
+      claim_type: build_config
+      subject: CFG_TUD_HID
+      object: "0"
+    expect:
+      verdict: supported
+      reason_code: build_config_macro_value_supported
+      supporting_must_include:
+        - fact_type: build_config
+          predicate: macro_value
+          subject: CFG_TUD_HID
+          object: "0"
+
+  - id: tinyusb_selected_dwc2_dcd_active
+    kind: verify_claim
+    claim:
+      claim_type: file_active
+      subject: src/portable/synopsys/dwc2/dcd_dwc2.c
+      object: active
+    expect:
+      verdict: supported
+      reason_code: target_file_selection_supported
+      supporting_must_include:
+        - fact_type: target_file
+          predicate: file_active
+          subject: src/portable/synopsys/dwc2/dcd_dwc2.c
+          payload_contains:
+            selection_status: active
+            active_port: src/portable/synopsys/dwc2
+
+  - id: tinyusb_nonselected_stm32_fsdev_dcd_inactive
+    kind: verify_claim
+    claim:
+      claim_type: file_active
+      subject: src/portable/st/stm32_fsdev/dcd_stm32_fsdev.c
+      object: inactive
+    expect:
+      verdict: supported
+      reason_code: target_file_selection_supported
+      supporting_must_include:
+        - fact_type: target_file
+          predicate: file_inactive
+          subject: src/portable/st/stm32_fsdev/dcd_stm32_fsdev.c
+          payload_contains:
+            selection_status: inactive
+            selection_reasons:
+              - non_selected_port
+
+  - id: tinyusb_hid_device_source_inactive
+    kind: verify_claim
+    claim:
+      claim_type: file_active
+      subject: src/class/hid/hid_device.c
+      object: inactive
+    expect:
+      verdict: supported
+      reason_code: target_file_selection_supported
+      supporting_must_include:
+        - fact_type: target_file
+          predicate: file_inactive
+          subject: src/class/hid/hid_device.c
+          payload_contains:
+            selection_status: inactive
+            selection_reasons:
+              - not_in_compile_commands
+
+  - id: tinyusb_main_calls_tusb_init
+    kind: verify_text
+    text: main calls tusb_init
+    expect:
+      overall_verdict: supported
+      verdicts_include:
+        - claim_type: calls
+          subject: main
+          object: tusb_init
+          verdict: supported
+
+  - id: tinyusb_tusb_init_calls_dcd_init
+    kind: verify_text
+    text: tusb_init calls dcd_init
+    expect:
+      overall_verdict: supported
+      verdicts_include:
+        - claim_type: calls
+          subject: tusb_init
+          object: dcd_init
+          verdict: supported
+
+
+  - id: tinyusb_configuration_descriptor_macro
+    kind: verify_claim
+    claim:
+      claim_type: usb_descriptor_semantic
+      subject: TUD_CONFIG_DESCRIPTOR
+      object: desc_fs_configuration
+      payload:
+        predicate: defines_configuration_descriptor
+    expect:
+      verdict: supported
+      reason_code: usb_descriptor_semantic_supported
+      supporting_must_include:
+        - fact_type: usb_descriptor
+          predicate: defines_configuration_descriptor
+          subject: TUD_CONFIG_DESCRIPTOR
+          object: desc_fs_configuration
+          payload_path_equals:
+            resolved_arguments.interface_count: 3
+            resolved_arguments.total_length: 98
+
+  - id: tinyusb_cdc_descriptor_macro
+    kind: verify_claim
+    claim:
+      claim_type: usb_descriptor_semantic
+      subject: CDC
+      object: desc_fs_configuration
+      payload:
+        class: CDC
+        interface_symbol: ITF_NUM_CDC
+        endpoint_symbol: EPNUM_CDC_IN
+    expect:
+      verdict: supported
+      reason_code: usb_descriptor_semantic_supported
+      supporting_must_include:
+        - fact_type: usb_descriptor
+          predicate: defines_class_interface_descriptor
+          subject: CDC
+          object: desc_fs_configuration
+          payload_contains:
+            usb_class: CDC
+            interface_symbol: ITF_NUM_CDC
+          payload_list_contains:
+            endpoint_symbols: EPNUM_CDC_IN
+          payload_path_equals:
+            resolved_arguments.endpoint_size: 64
+            endpoint_directions.EPNUM_CDC_IN: in
+
+  - id: tinyusb_msc_descriptor_macro
+    kind: verify_claim
+    claim:
+      claim_type: usb_descriptor_semantic
+      subject: MSC
+      object: desc_fs_configuration
+      payload:
+        class: MSC
+        interface_symbol: ITF_NUM_MSC
+        endpoint_symbol: EPNUM_MSC_OUT
+    expect:
+      verdict: supported
+      reason_code: usb_descriptor_semantic_supported
+      supporting_must_include:
+        - fact_type: usb_descriptor
+          predicate: defines_class_interface_descriptor
+          subject: MSC
+          object: desc_fs_configuration
+          payload_contains:
+            usb_class: MSC
+            interface_symbol: ITF_NUM_MSC
+          payload_list_contains:
+            endpoint_symbols: EPNUM_MSC_OUT
+          payload_path_equals:
+            resolved_arguments.endpoint_size: 64
+            endpoint_directions.EPNUM_MSC_OUT: out
+
+  - id: tinyusb_device_descriptor_callback_provider
+    kind: verify_claim
+    claim:
+      claim_type: usb_descriptor_semantic
+      subject: tud_descriptor_device_cb
+      object: desc_device
+      payload:
+        predicate: provides_descriptor_callback
+        descriptor_kind: device
+    expect:
+      verdict: supported
+      reason_code: usb_descriptor_semantic_supported
+      supporting_must_include:
+        - fact_type: usb_descriptor
+          predicate: provides_descriptor_callback
+          subject: tud_descriptor_device_cb
+          object: desc_device
+          payload_contains:
+            descriptor_kind: device
+            callback_name: tud_descriptor_device_cb
+            returned_descriptor: desc_device
+
+  - id: tinyusb_configuration_descriptor_callback_provider
+    kind: verify_claim
+    claim:
+      claim_type: usb_descriptor_semantic
+      subject: tud_descriptor_configuration_cb
+      object: desc_fs_configuration
+      payload:
+        predicate: provides_descriptor_callback
+        descriptor_kind: configuration
+    expect:
+      verdict: supported
+      reason_code: usb_descriptor_semantic_supported
+      supporting_must_include:
+        - fact_type: usb_descriptor
+          predicate: provides_descriptor_callback
+          subject: tud_descriptor_configuration_cb
+          object: desc_fs_configuration
+          payload_contains:
+            descriptor_kind: configuration
+            callback_name: tud_descriptor_configuration_cb
+            returned_descriptor: desc_fs_configuration
+
+  - id: tinyusb_mount_weak_default_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_callback_semantic
+      subject: tud_mount_cb
+      payload:
+        predicate: declares_weak_callback_default
+        linkage: weak
+        callback_family: device_lifecycle
+        callback_requirement: optional_weak_default
+    expect:
+      verdict: supported
+      reason_code: tinyusb_callback_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_callback
+          predicate: declares_weak_callback_default
+          subject: tud_mount_cb
+          object: weak_default
+          payload_contains:
+            callback_name: tud_mount_cb
+            linkage: weak
+            callback_family: device_lifecycle
+            callback_requirement: optional_weak_default
+
+  - id: tinyusb_mount_application_override_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_callback_semantic
+      subject: tud_mount_cb
+      payload:
+        predicate: overrides_weak_callback
+        override_status: overridden_by_application
+    expect:
+      verdict: supported
+      reason_code: tinyusb_callback_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_callback
+          predicate: overrides_weak_callback
+          subject: tud_mount_cb
+          payload_contains:
+            callback_name: tud_mount_cb
+            override_status: overridden_by_application
+            weak_default_available: true
+            application_override: true
+            weak_definition_path: src/device/usbd.c
+            application_definition_path: examples/device/cdc_msc/src/main.c
+
+  - id: tinyusb_configuration_descriptor_callback_is_application_provider
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_callback_semantic
+      subject: tud_descriptor_configuration_cb
+      payload:
+        predicate: declares_tinyusb_callback_implementation
+        callback_family: descriptor
+        callback_requirement: application_descriptor_provider
+        application_path: true
+    expect:
+      verdict: supported
+      reason_code: tinyusb_callback_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_callback
+          predicate: declares_tinyusb_callback_implementation
+          subject: tud_descriptor_configuration_cb
+          object: application_callback
+          payload_contains:
+            callback_family: descriptor
+            callback_requirement: application_descriptor_provider
+            provider_kind: descriptor_callback_provider
+            application_path: true
+
+  - id: tinyusb_cdc_optional_weak_callback_not_overridden
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_callback_semantic
+      subject: tud_cdc_line_state_cb
+      payload:
+        predicate: declares_weak_callback_default
+        callback_family: cdc
+        weak_default: true
+    expect:
+      verdict: supported
+      reason_code: tinyusb_callback_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_callback
+          predicate: declares_weak_callback_default
+          subject: tud_cdc_line_state_cb
+          object: weak_default
+          payload_contains:
+            callback_family: cdc
+            callback_requirement: optional_weak_default
+            override_status: weak_default_may_be_overridden
+
+
+  - id: tinyusb_cdc_class_driver_entry_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_driver_dispatch_semantic
+      subject: CDC
+      object: _usbd_driver
+      payload:
+        predicate: declares_class_driver_entry
+        config_macro: CFG_TUD_CDC
+    expect:
+      verdict: supported
+      reason_code: tinyusb_driver_dispatch_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_driver_dispatch
+          predicate: declares_class_driver_entry
+          subject: CDC
+          object: _usbd_driver
+          payload_contains:
+            driver_class: CDC
+            driver_table: _usbd_driver
+            config_macro: CFG_TUD_CDC
+          payload_list_contains:
+            callback_symbols: cdcd_open
+
+  - id: tinyusb_cdc_open_callback_binding_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_driver_dispatch_semantic
+      subject: CDC
+      object: cdcd_open
+      payload:
+        predicate: binds_driver_callback
+        callback_field: open
+    expect:
+      verdict: supported
+      reason_code: tinyusb_driver_dispatch_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_driver_dispatch
+          predicate: binds_driver_callback
+          subject: CDC
+          object: cdcd_open
+          payload_contains:
+            driver_class: CDC
+            callback_field: open
+            callback_symbol: cdcd_open
+            resolution_status: resolved
+
+  - id: tinyusb_msc_xfer_callback_binding_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_driver_dispatch_semantic
+      subject: MSC
+      object: mscd_xfer_cb
+      payload:
+        predicate: binds_driver_callback
+        callback_field: xfer_cb
+    expect:
+      verdict: supported
+      reason_code: tinyusb_driver_dispatch_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_driver_dispatch
+          predicate: binds_driver_callback
+          subject: MSC
+          object: mscd_xfer_cb
+          payload_contains:
+            driver_class: MSC
+            callback_field: xfer_cb
+            callback_symbol: mscd_xfer_cb
+
+  - id: tinyusb_endpoint_driver_map_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_driver_dispatch_semantic
+      subject: ep2drv
+      payload:
+        predicate: declares_endpoint_driver_map
+        map_kind: endpoint_to_driver_map
+    expect:
+      verdict: supported
+      reason_code: tinyusb_driver_dispatch_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_driver_dispatch
+          predicate: declares_endpoint_driver_map
+          subject: ep2drv
+          object: endpoint_to_driver_map
+          payload_contains:
+            map_name: ep2drv
+            map_kind: endpoint_to_driver_map
+
+  - id: tinyusb_descriptor_open_binds_endpoint_interface_maps
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_driver_dispatch_semantic
+      subject: drv_id
+      object: tu_bind_driver_to_ep_itf
+      payload:
+        predicate: binds_driver_to_endpoint_interface_maps
+        map_name: ep2drv
+    expect:
+      verdict: supported
+      reason_code: tinyusb_driver_dispatch_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_driver_dispatch
+          predicate: binds_driver_to_endpoint_interface_maps
+          subject: drv_id
+          object: tu_bind_driver_to_ep_itf
+          payload_contains:
+            endpoint_map: _usbd_dev.ep2drv
+            interface_map: _usbd_dev.itf2drv
+            binds_endpoint_map: true
+            binds_interface_map: true
+
+  - id: tinyusb_xfer_complete_indirect_dispatch_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_driver_dispatch_semantic
+      subject: dcd_event_xfer_complete
+      object: xfer_cb
+      payload:
+        predicate: indirect_dispatches_to_driver_callback
+        map_name: ep2drv
+        via_function: get_driver
+    expect:
+      verdict: supported
+      reason_code: tinyusb_driver_dispatch_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_driver_dispatch
+          predicate: indirect_dispatches_to_driver_callback
+          subject: dcd_event_xfer_complete
+          object: xfer_cb
+          payload_contains:
+            dispatch_function: dcd_event_xfer_complete
+            callback_field: xfer_cb
+            via_function: get_driver
+            map_name: ep2drv
+            map_kind: endpoint_to_driver_map
+            uses_endpoint_map: true
+
+
+  - id: tinyusb_usbd_edpt_xfer_async_submit
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_device_runtime_semantic
+      subject: usbd_edpt_xfer
+      object: async_transfer_request
+      payload:
+        predicate: endpoint_transfer_submit
+        dcd_api: dcd_edpt_xfer
+        transfer_lifecycle_stage: submit
+    expect:
+      verdict: supported
+      reason_code: tinyusb_device_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_device_runtime
+          predicate: endpoint_transfer_submit
+          subject: usbd_edpt_xfer
+          object: async_transfer_request
+          payload_contains:
+            api_name: usbd_edpt_xfer
+            dcd_transfer_api: dcd_edpt_xfer
+            is_async_transfer_submit: true
+          payload_list_contains:
+            dcd_api_calls: dcd_edpt_xfer
+
+  - id: tinyusb_dcd_edpt_xfer_port_boundary
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_device_runtime_semantic
+      subject: dcd_edpt_xfer
+      object: hardware_controller_boundary
+      payload:
+        predicate: dcd_transfer_submit_boundary
+        controller_port_path: src/portable/synopsys/dwc2
+        hardware_boundary: true
+    expect:
+      verdict: supported
+      reason_code: tinyusb_device_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_device_runtime
+          predicate: dcd_transfer_submit_boundary
+          subject: dcd_edpt_xfer
+          object: hardware_controller_boundary
+          payload_contains:
+            api_name: dcd_edpt_xfer
+            hardware_boundary: true
+            controller_port_path: src/portable/synopsys/dwc2
+            unknown_type: hardware_register_semantics_unknown
+
+  - id: tinyusb_osal_none_event_queue_declared
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_device_runtime_semantic
+      subject: _usbd_q
+      object: osal_queue
+      payload:
+        predicate: declares_osal_event_queue
+        queue_name: _usbd_q
+        osal_profile: none
+    expect:
+      verdict: supported
+      reason_code: tinyusb_device_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_device_runtime
+          predicate: declares_osal_event_queue
+          subject: _usbd_q
+          object: osal_queue
+          payload_contains:
+            queue_name: _usbd_q
+            osal_profile: none
+            config_macro: CFG_TUSB_OS
+
+  - id: tinyusb_osal_queue_send_api_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_device_runtime_semantic
+      subject: osal_queue_send
+      object: event_queue
+      payload:
+        predicate: osal_queue_send
+        osal_profile: none
+    expect:
+      verdict: conditional
+      reason_code: tinyusb_device_runtime_semantic_conditional
+      supporting_must_include:
+        - fact_type: tinyusb_device_runtime
+          predicate: osal_queue_send
+          subject: osal_queue_send
+          object: event_queue
+          payload_contains:
+            api_name: osal_queue_send
+            queue_operation: producer
+            osal_profile: none
+
+  - id: tinyusb_dcd_event_handler_defers_to_osal_queue
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_device_runtime_semantic
+      subject: dcd_event_handler
+      object: osal_queue_send
+      payload:
+        predicate: defers_dcd_event_to_task_queue
+        queue_api: osal_queue_send
+    expect:
+      verdict: supported
+      reason_code: tinyusb_device_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_device_runtime
+          predicate: defers_dcd_event_to_task_queue
+          subject: dcd_event_handler
+          object: osal_queue_send
+          payload_contains:
+            queue_api: osal_queue_send
+            defer_model: dcd_event_handler_enqueues_for_tud_task
+            isr_safe_arg_detected: true
+
+  - id: tinyusb_tud_task_consumes_event_queue
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_device_runtime_semantic
+      subject: tud_task
+      object: osal_queue_receive
+      payload:
+        predicate: consumes_dcd_event_queue
+        queue_api: osal_queue_receive
+        consumes_event_queue: true
+        dispatches_transfer_complete: true
+    expect:
+      verdict: supported
+      reason_code: tinyusb_device_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_device_runtime
+          predicate: consumes_dcd_event_queue
+          subject: tud_task
+          object: osal_queue_receive
+          payload_contains:
+            queue_api: osal_queue_receive
+            consumes_event_queue: true
+            dispatches_transfer_complete: true
+
+  - id: tinyusb_xfer_complete_event_releases_and_dispatches
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_device_runtime_semantic
+      subject: dcd_event_xfer_complete
+      object: event_queue
+      payload:
+        predicate: endpoint_transfer_complete_event
+        dispatches_class_xfer_callback: true
+    expect:
+      verdict: supported
+      reason_code: tinyusb_device_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_device_runtime
+          predicate: endpoint_transfer_complete_event
+          subject: dcd_event_xfer_complete
+          object: event_queue
+          payload_contains:
+            api_name: dcd_event_xfer_complete
+            transfer_lifecycle_stage: complete
+            dispatches_class_xfer_callback: true
+
+
+  - id: tinyusb_diagnostics_smoke
+    kind: query_diagnostics
+    expect:
+      min_total_facts: 80
+      max_warnings: 0
+
+  - id: tinyusb_status_smoke
+    kind: repo_status
+    expect:
+      clean: true
+
+  - id: tinyusb_cdc_write_stream_api_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_class_protocol_semantic
+      subject: tud_cdc_write
+      object: cdc_write
+      payload:
+        predicate: declares_cdc_stream_api
+        class: CDC
+        transfer_direction: in
+    expect:
+      verdict: supported
+      reason_code: tinyusb_class_protocol_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_class_protocol
+          predicate: declares_cdc_stream_api
+          subject: tud_cdc_write
+          object: cdc_write
+          payload_contains:
+            usb_class: CDC
+            protocol_operation: cdc_write
+            transfer_direction: in
+
+  - id: tinyusb_cdc_line_state_callback_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_class_protocol_semantic
+      subject: tud_cdc_line_state_cb
+      object: cdc_line_state
+      payload:
+        predicate: declares_cdc_callback
+        class: CDC
+    expect:
+      verdict: supported
+      reason_code: tinyusb_class_protocol_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_class_protocol
+          predicate: declares_cdc_callback
+          subject: tud_cdc_line_state_cb
+          object: cdc_line_state
+          payload_contains:
+            usb_class: CDC
+            line_state_semantics: true
+
+  - id: tinyusb_msc_read10_callback_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_class_protocol_semantic
+      subject: tud_msc_read10_cb
+      object: READ10
+      payload:
+        predicate: declares_msc_scsi_callback
+        scsi_command: READ10
+    expect:
+      verdict: supported
+      reason_code: tinyusb_class_protocol_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_class_protocol
+          predicate: declares_msc_scsi_callback
+          subject: tud_msc_read10_cb
+          object: READ10
+          payload_contains:
+            usb_class: MSC
+            scsi_command: READ10
+
+  - id: tinyusb_msc_write10_callback_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_class_protocol_semantic
+      subject: tud_msc_write10_cb
+      object: WRITE10
+      payload:
+        predicate: declares_msc_scsi_callback
+        scsi_command: WRITE10
+    expect:
+      verdict: supported
+      reason_code: tinyusb_class_protocol_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_class_protocol
+          predicate: declares_msc_scsi_callback
+          subject: tud_msc_write10_cb
+          object: WRITE10
+          payload_contains:
+            usb_class: MSC
+            scsi_command: WRITE10

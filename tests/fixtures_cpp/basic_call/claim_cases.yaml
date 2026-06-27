@@ -1,0 +1,25 @@
+cases:
+  - id: claim_calls_contradicted
+    claim:
+      claim_type: calls
+      subject: start_device
+      object: missing_target
+    verdict: contradicted
+    reason_code: resolved_outgoing_calls_do_not_include_target
+    expected:
+      contradicting_must_include:
+        - fact_type: call
+          caller: start_device
+          callee: init_device
+
+  - id: claim_include_supported
+    claim:
+      claim_type: includes
+      subject: src/main.cpp
+      object: device.h
+    verdict: supported
+    reason_code: include_edge_supported
+    expected:
+      supporting_must_include:
+        - fact_type: include
+          subject: src/main.cpp

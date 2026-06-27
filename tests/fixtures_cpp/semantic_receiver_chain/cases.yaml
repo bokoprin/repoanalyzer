@@ -1,0 +1,31 @@
+cases:
+  - id: semantic_receiver_chain_searchword
+    question: "sakura::CLayoutMgr::SearchWord はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: sakura::CViewCommander::Command_SEARCH_NEXT
+          callee: sakura::CLayoutMgr::SearchWord
+          call_kind: member_direct
+          payload_contains:
+            resolution_status: resolved
+            receiver_type_resolved: sakura::CLayoutMgr
+            resolution_basis: receiver_chain_cross_tu
+    answerability: answerable
+    required_unknowns: []
+
+  - id: semantic_receiver_chain_nested_member
+    question: "sakura::Inner::method はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: sakura::CViewCommander::Command_MEMBER_CHAIN
+          callee: sakura::Inner::method
+          call_kind: member_direct
+          payload_contains:
+            resolution_status: resolved
+            receiver_type_resolved: sakura::Inner
+    answerability: answerable
+    required_unknowns: []

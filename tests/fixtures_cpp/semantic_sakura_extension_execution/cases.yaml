@@ -1,0 +1,43 @@
+cases:
+  - id: macro_command_execution_trace
+    question: "プラグイン / マクロ / 外部コマンド実行経路はどう行われる？"
+    expected:
+      must_include:
+        - fact_type: relation
+          predicate: records_macro_command
+          object: sakura::CSMacroMgr::Append
+        - fact_type: relation
+          predicate: executes_macro
+          object: sakura::CSMacroMgr::Exec
+        - fact_type: call_path
+          payload_contains:
+            route_kind: macro_command_execution_trace
+    answerability: answerable
+    required_unknowns: []
+
+  - id: plugin_hook_and_command_execution_trace
+    question: "プラグイン / マクロ / 外部コマンド実行経路はどう行われる？"
+    expected:
+      must_include:
+        - fact_type: relation
+          predicate: registers_plugin_hook
+        - fact_type: relation
+          predicate: invokes_plugin_hook
+        - fact_type: call_path
+          payload_contains:
+            route_kind: plugin_hook_invocation_trace
+    answerability: answerable
+    required_unknowns: []
+
+  - id: external_command_launch_trace
+    question: "プラグイン / マクロ / 外部コマンド実行経路はどう行われる？"
+    expected:
+      must_include:
+        - fact_type: relation
+          subject: sakura::CViewCommander::Command_EXECEXTCOMMAND
+          predicate: launches_external_process
+        - fact_type: call_path
+          payload_contains:
+            route_kind: external_command_launch_trace
+    answerability: answerable
+    required_unknowns: []

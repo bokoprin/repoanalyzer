@@ -1,0 +1,74 @@
+cases:
+  - id: grep_replace_constructs_write_data
+    question: "sakura::CWriteData::CWriteData はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: sakura::CGrepAgent::DoGrepReplaceFile
+          callee: sakura::CWriteData::CWriteData
+          call_kind: constructor
+          payload_contains:
+            resolution_status: resolved
+            constructed_type: sakura::CWriteData
+    answerability: answerable
+    required_unknowns: []
+
+  - id: grep_replace_outputs_replaced_buffer
+    question: "sakura::CWriteData::AppendBuffer はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: sakura::CGrepAgent::DoGrepReplaceFile
+          callee: sakura::CWriteData::AppendBuffer
+          call_kind: member_direct
+          payload_contains:
+            resolution_status: resolved
+            receiver_type_resolved: sakura::CWriteData
+    answerability: answerable
+    required_unknowns: []
+
+  - id: grep_replace_uses_search_string
+    question: "sakura::CSearchAgent::SearchString はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: sakura::CGrepAgent::DoGrepReplaceFile
+          callee: sakura::CSearchAgent::SearchString
+          call_kind: static_member
+          payload_contains:
+            resolution_status: resolved
+    answerability: answerable
+    required_unknowns: []
+
+  - id: grep_replace_temporary_doc_type_manager
+    question: "sakura::CDocTypeManager::GetTypeConfigMini はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: sakura::CGrepAgent::DoGrepReplaceFile
+          callee: sakura::CDocTypeManager::GetTypeConfigMini
+          call_kind: member_direct
+          payload_contains:
+            resolution_status: resolved
+            receiver_type_resolved: sakura::CDocTypeManager
+    answerability: answerable
+    required_unknowns: []
+
+  - id: grep_replace_writer_uses_encoder
+    question: "sakura::CCodeBase::UnicodeToCode はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: sakura::CWriteData::Output
+          callee: sakura::CCodeBase::UnicodeToCode
+          call_kind: member_direct
+          payload_contains:
+            resolution_status: resolved
+            receiver_type_resolved: sakura::CCodeBase
+    answerability: answerable
+    required_unknowns: []

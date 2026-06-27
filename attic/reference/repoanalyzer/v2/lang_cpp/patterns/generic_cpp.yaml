@@ -1,0 +1,75 @@
+callback_registration_terms:
+  - register
+  - set_callback
+  - callback
+  - subscribe
+  - connect
+callback_invocation_terms:
+  - callback
+  - invoke
+  - notify
+  - dispatch
+function_pointer_assignment_terms:
+  - "="
+  - "&"
+function_pointer_indirect_terms:
+  - "(*"
+  - "->("
+override_terms:
+  - override
+  - virtual
+task_terms:
+  - task
+  - thread
+  - worker
+  - create
+  - start
+queue_terms:
+  - queue
+  - enqueue
+  - dequeue
+  - push
+  - pop
+  - send
+  - receive
+event_terms:
+  - event
+  - notify
+  - wait
+  - post
+  - dispatch
+timer_terms:
+  - timer
+  - timeout
+isr_terms:
+  - isr
+  - interrupt
+  - irq
+state_terms:
+  - state
+  - next_state
+  - transition
+  - switch
+path_weights:
+  direct_call: 0.68
+  override_call: 0.56
+  callback_registration: 0.52
+  callback_invoke: 0.62
+  function_pointer_assignment: 0.44
+  function_pointer_call: 0.38
+  task_handoff: 0.58
+  queue_handoff: 0.54
+  event_handoff: 0.52
+  timer_handoff: 0.5
+  isr_handoff: 0.5
+  state_transition: 0.5
+  flow_gap: 0.28
+noisy_paths:
+  - externals/
+  - vendor/
+  - tests/
+  - test/
+  - sample/
+  - samples/
+  - docs/
+  - help/

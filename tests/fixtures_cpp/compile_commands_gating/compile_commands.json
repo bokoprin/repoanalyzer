@@ -1,0 +1,12 @@
+[
+  {
+    "directory": ".",
+    "command": "c++ -Iinclude -c src/main.cpp",
+    "file": "src/main.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "c++ -Iinclude -c src/device.cpp",
+    "file": "src/device.cpp"
+  }
+]

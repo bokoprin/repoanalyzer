@@ -1,0 +1,65 @@
+cases:
+  - id: edit_command_has_insert_trace
+    question: "Undo/Redo と編集操作はどう追跡される？"
+    expected:
+      must_include:
+        - fact_type: call_path
+          subject: F_WCHAR
+          predicate: reaches
+          object: sakura::CEditView::InsertData_CEditView
+          payload_contains:
+            route_kind: edit_command_trace
+        - fact_type: relation
+          subject: sakura::CViewCommander::Command_WCHAR
+          predicate: performs_edit_operation
+          object: sakura::CEditView::InsertData_CEditView
+          payload_contains:
+            operation_kind: insert_text
+    answerability: answerable
+    required_unknowns: []
+
+  - id: undo_command_has_history_and_replay_trace
+    question: "Undo/Redo と編集操作はどう追跡される？"
+    expected:
+      must_include:
+        - fact_type: relation
+          subject: F_UNDO
+          predicate: dispatches_to
+          object: sakura::CViewCommander::Command_UNDO
+        - fact_type: relation
+          subject: sakura::CViewCommander::Command_UNDO
+          predicate: consumes_undo_history
+          object: sakura::COpeBuf::DoUndo
+        - fact_type: relation
+          subject: sakura::CViewCommander::Command_UNDO
+          predicate: performs_edit_operation
+          object: sakura::CEditView::ReplaceData_CEditView3
+        - fact_type: call_path
+          subject: F_UNDO
+          payload_contains:
+            route_kind: undo_execution_trace
+    answerability: answerable
+    required_unknowns: []
+
+  - id: redo_command_has_history_and_replay_trace
+    question: "Undo/Redo と編集操作はどう追跡される？"
+    expected:
+      must_include:
+        - fact_type: relation
+          subject: F_REDO
+          predicate: dispatches_to
+          object: sakura::CViewCommander::Command_REDO
+        - fact_type: relation
+          subject: sakura::CViewCommander::Command_REDO
+          predicate: consumes_redo_history
+          object: sakura::COpeBuf::DoRedo
+        - fact_type: relation
+          subject: sakura::CViewCommander::Command_REDO
+          predicate: performs_edit_operation
+          object: sakura::CEditView::ReplaceData_CEditView3
+        - fact_type: call_path
+          subject: F_REDO
+          payload_contains:
+            route_kind: redo_execution_trace
+    answerability: answerable
+    required_unknowns: []

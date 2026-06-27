@@ -1,0 +1,52 @@
+cases:
+  - id: cpp_compare_if_eval_001
+    question: "init_device はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: start_device
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: mode_two_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: mode_not_two_fallback
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: range_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: level_nonpositive_fallback
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: hex_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: negative_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: unresolved_compare_entry
+          callee: init_device
+          path: src/device.cpp
+          build_status: conditional
+      must_not_include:
+        - fact_type: call
+          caller: mode_two_fallback
+          callee: init_device
+        - fact_type: call
+          caller: mode_not_two_entry
+          callee: init_device
+        - fact_type: call
+          caller: level_positive_entry
+          callee: init_device
+    answerability: partial
+    required_unknowns:
+      - conditional_build_evidence

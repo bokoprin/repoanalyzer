@@ -1,0 +1,197 @@
+schema_version: snapshot_manifest.v1
+snapshot_id: phase7_sakura_cross_trace_snapshot
+description: Reproducible compact Sakura Editor-derived Phase7 cross-trace validation
+  snapshot.
+source_root: .
+write_manifest_copy: true
+sources:
+- source: modules/config_profile/include/config_profile_api.h
+  destination: modules/config_profile/include/config_profile_api.h
+  sha256: eec4dfe3d7926423161d3173d6fc3becf92ceca8b4066a9f549afe81ac4c9e7e
+  required: true
+  upstream:
+    repository: sakura-editor/sakura
+    ref: bca1be151a053722e46cc70b82c2320d2dd3795a
+    paths: sakura_core/env/CShareData_IO.cpp
+- source: modules/config_profile/src/config_profile.cpp
+  destination: modules/config_profile/src/config_profile.cpp
+  sha256: aca65f9e32acf467e697dd631cd8f5371ebd80dd991cd70a07092ac36a0f3474
+  required: true
+  upstream:
+    repository: sakura-editor/sakura
+    ref: bca1be151a053722e46cc70b82c2320d2dd3795a
+    paths: sakura_core/env/CShareData_IO.cpp
+- source: modules/extension_execution/src/extension_execution.cpp
+  destination: modules/extension_execution/src/extension_execution.cpp
+  sha256: a89f3967c6e26603f2dfd2c606ae0e07996de97c62c7f1f3c07912dbdb10e684
+  required: true
+  upstream:
+    repository: sakura-editor/sakura
+    ref: bca1be151a053722e46cc70b82c2320d2dd3795a
+    paths: sakura_core/macro/CSMacroMgr.cpp + sakura_core/plugin/CJackManager.cpp
+      + sakura_core/cmd/CViewCommander_File.cpp
+- source: modules/file_loading/include/file_loading_api.h
+  destination: modules/file_loading/include/file_loading_api.h
+  sha256: 6369474e5418003d5ed9e9171dd92e384877acd7d20898da35e42e06974ea20a
+  required: true
+  upstream:
+    repository: sakura-editor/sakura
+    ref: bca1be151a053722e46cc70b82c2320d2dd3795a
+    paths: sakura_core/io/CFileLoad.cpp + sakura_core/charset/CCodeMediator.cpp
+- source: modules/file_loading/src/file_loading.cpp
+  destination: modules/file_loading/src/file_loading.cpp
+  sha256: 9582a01168850e12acef6e2ebf3581c45620cb5a5f38bc223d93630c5c273680
+  required: true
+  upstream:
+    repository: sakura-editor/sakura
+    ref: bca1be151a053722e46cc70b82c2320d2dd3795a
+    paths: sakura_core/io/CFileLoad.cpp + sakura_core/charset/CCodeMediator.cpp
+- source: modules/grep_chain/include/grep_api.h
+  destination: modules/grep_chain/include/grep_api.h
+  sha256: bf2add17548dfa44c22885b93e9b9733ba662a3c02fbc884f2335d1e0547557f
+  required: true
+  upstream:
+    repository: sakura-editor/sakura
+    ref: bca1be151a053722e46cc70b82c2320d2dd3795a
+    paths: sakura_core/agent/CGrepAgent.cpp + sakura_core/cmd/CViewCommander_Search.cpp
+- source: modules/grep_chain/src/grep.cpp
+  destination: modules/grep_chain/src/grep.cpp
+  sha256: 3952f360cb2f60c48d56007d65d58c52d92b4cf9ec2b7cd50a7a51d4e0b78b45
+  required: true
+  upstream:
+    repository: sakura-editor/sakura
+    ref: bca1be151a053722e46cc70b82c2320d2dd3795a
+    paths: sakura_core/agent/CGrepAgent.cpp + sakura_core/cmd/CViewCommander_Search.cpp
+- source: modules/grep_replace/include/grep_replace_api.h
+  destination: modules/grep_replace/include/grep_replace_api.h
+  sha256: 2cab8fdecac6b3a326ac26267f4d217efe980a59745c55cd94a014ae77ec90b4
+  required: true
+  upstream:
+    repository: sakura-editor/sakura
+    ref: bca1be151a053722e46cc70b82c2320d2dd3795a
+    paths: sakura_core/agent/CGrepAgent.cpp
+- source: modules/grep_replace/src/grep_replace.cpp
+  destination: modules/grep_replace/src/grep_replace.cpp
+  sha256: 7618118658d2dc1634a8306902d2892a63861617b9a2343e4093735f40298e9c
+  required: true
+  upstream:
+    repository: sakura-editor/sakura
+    ref: bca1be151a053722e46cc70b82c2320d2dd3795a
+    paths: sakura_core/agent/CGrepAgent.cpp
+- source: modules/search_command/include/command_dispatch_api.h
+  destination: modules/search_command/include/command_dispatch_api.h
+  sha256: a72b1da3a056ff03ea6e0fede02b34235d24c5d3473d5f840887b89f9a647725
+  required: true
+  upstream:
+    repository: sakura-editor/sakura
+    ref: bca1be151a053722e46cc70b82c2320d2dd3795a
+    paths: sakura_core/cmd/CViewCommander.cpp + sakura_core/cmd/CViewCommander_Search.cpp
+- source: modules/search_command/src/command_dispatch.cpp
+  destination: modules/search_command/src/command_dispatch.cpp
+  sha256: 4e966192c7a4f42184095567b5768f212781acf3047cb8a04b8e250fea560a2b
+  required: true
+  upstream:
+    repository: sakura-editor/sakura
+    ref: bca1be151a053722e46cc70b82c2320d2dd3795a
+    paths: sakura_core/cmd/CViewCommander.cpp + sakura_core/cmd/CViewCommander_Search.cpp
+- source: modules/ui_resource/src/sakura_ui.rc
+  destination: modules/ui_resource/src/sakura_ui.rc
+  sha256: dc2956dfa15d84a2529ab17327dddc7e8d1360560337ac381e548359c6c94c3e
+  required: true
+  upstream:
+    repository: sakura-editor/sakura
+    ref: bca1be151a053722e46cc70b82c2320d2dd3795a
+    paths: sakura_lang/sakura_rc_en-US.rc + sakura_core/func/CKeyBind.cpp + sakura_core/uiparts/CMenuDrawer.cpp
+- source: modules/ui_resource/src/ui_resource.cpp
+  destination: modules/ui_resource/src/ui_resource.cpp
+  sha256: 03801e8bc3e641992586e9fa1d9f76395eb49a05310b2bfc9d36e5727c558e4f
+  required: true
+  upstream:
+    repository: sakura-editor/sakura
+    ref: bca1be151a053722e46cc70b82c2320d2dd3795a
+    paths: sakura_lang/sakura_rc_en-US.rc + sakura_core/func/CKeyBind.cpp + sakura_core/uiparts/CMenuDrawer.cpp
+- source: modules/undo_edit/include/undo_edit_api.h
+  destination: modules/undo_edit/include/undo_edit_api.h
+  sha256: ca30755c2f290c2f8e7886e2df409aaf4ba8a0efe22b869b7b0a2a9b83b83fb1
+  required: true
+  upstream:
+    repository: sakura-editor/sakura
+    ref: bca1be151a053722e46cc70b82c2320d2dd3795a
+    paths: sakura_core/cmd/CViewCommander.cpp + sakura_core/cmd/CViewCommander_Edit.cpp
+- source: modules/undo_edit/src/undo_edit.cpp
+  destination: modules/undo_edit/src/undo_edit.cpp
+  sha256: 5cff0204e9dc358cc272a5071eb66377742e2d7d282fdbc86afb2e40e5f2e600
+  required: true
+  upstream:
+    repository: sakura-editor/sakura
+    ref: bca1be151a053722e46cc70b82c2320d2dd3795a
+    paths: sakura_core/cmd/CViewCommander.cpp + sakura_core/cmd/CViewCommander_Edit.cpp
+- source: modules/windows_message/include/windows_message_api.h
+  destination: modules/windows_message/include/windows_message_api.h
+  sha256: 136534a3f32623defa96fbbe4ec4d3d5ed83de5f9c638a17d666b706e49ae7bc
+  required: true
+  upstream:
+    repository: sakura-editor/sakura
+    ref: bca1be151a053722e46cc70b82c2320d2dd3795a
+    paths: sakura_core/typeprop/CPropTypesColor.cpp + dialog/message samples
+- source: modules/windows_message/src/windows_message.cpp
+  destination: modules/windows_message/src/windows_message.cpp
+  sha256: 70f773b56c785ba4c509c240271138f1b5c5ba6b1d704a26a90305cb83f590b0
+  required: true
+  upstream:
+    repository: sakura-editor/sakura
+    ref: bca1be151a053722e46cc70b82c2320d2dd3795a
+    paths: sakura_core/typeprop/CPropTypesColor.cpp + dialog/message samples
+- source: phase7_sakura_cross_trace_cases.yaml
+  destination: phase7_sakura_cross_trace_cases.yaml
+  sha256: 48ed5d576cd5fc2f9838bde89d5fea97de62495f5ef5267077880f308f87d9ec
+  required: true
+  role: real_repo_eval_cases
+compile_commands:
+  output: compile_commands.json
+  entries:
+  - directory: .
+    command: clang++ -I. -Iinclude -std=c++17 -c modules/config_profile/src/config_profile.cpp
+    file: modules/config_profile/src/config_profile.cpp
+  - directory: .
+    command: clang++ -I. -Iinclude -std=c++17 -c modules/extension_execution/src/extension_execution.cpp
+    file: modules/extension_execution/src/extension_execution.cpp
+  - directory: .
+    command: clang++ -I. -Iinclude -std=c++17 -c modules/file_loading/src/file_loading.cpp
+    file: modules/file_loading/src/file_loading.cpp
+  - directory: .
+    command: clang++ -I. -Iinclude -std=c++17 -c modules/grep_chain/src/grep.cpp
+    file: modules/grep_chain/src/grep.cpp
+  - directory: .
+    command: clang++ -I. -Iinclude -std=c++17 -c modules/grep_replace/src/grep_replace.cpp
+    file: modules/grep_replace/src/grep_replace.cpp
+  - directory: .
+    command: clang++ -I. -Iinclude -std=c++17 -c modules/search_command/src/command_dispatch.cpp
+    file: modules/search_command/src/command_dispatch.cpp
+  - directory: .
+    command: clang++ -I. -Iinclude -std=c++17 -c modules/ui_resource/src/ui_resource.cpp
+    file: modules/ui_resource/src/ui_resource.cpp
+  - directory: .
+    command: clang++ -I. -Iinclude -std=c++17 -c modules/undo_edit/src/undo_edit.cpp
+    file: modules/undo_edit/src/undo_edit.cpp
+  - directory: .
+    command: clang++ -I. -Iinclude -std=c++17 -c modules/windows_message/src/windows_message.cpp
+    file: modules/windows_message/src/windows_message.cpp
+readme:
+  output: README.md
+  content: '# Phase7 Sakura cross-trace snapshot
+
+
+    This fixture is a larger Sakura Editor-derived snapshot assembled from the per-topic
+    Sakura fixtures.
+
+    It intentionally spans UI resources, command dispatch, search/grep, grep replace,
+    undo/redo, file loading/encoding, config/profile I/O, Windows dialog/message callbacks,
+    and macro/plugin/external command execution.
+
+
+    The files are compact source-derived slices rather than a full Sakura Editor checkout,
+    so expectations should assert supported semantic evidence and avoid claiming complete
+    coverage of the upstream project.
+
+    '

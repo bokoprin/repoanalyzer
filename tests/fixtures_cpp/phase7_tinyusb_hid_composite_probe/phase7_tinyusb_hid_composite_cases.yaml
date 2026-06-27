@@ -1,0 +1,222 @@
+id: phase7_tinyusb_hid_composite_class_protocol_probe
+description: TinyUSB HID composite descriptor and class-specific protocol compact probe.
+ingest:
+  enabled: true
+  config: repoanalyzer.yml
+budgets:
+  max_total_ms: 20000
+  max_facts: 1500
+  max_indexed_files: 20
+expect:
+  ingest:
+    status: indexed
+    min_files: 7
+    min_facts: 80
+  repo_status:
+    clean: true
+  diagnostics:
+    min_total_facts: 80
+    min_indexed_files: 7
+    max_warnings: 0
+scenarios:
+  - id: hid_target_profile_role
+    kind: verify_claim
+    claim:
+      claim_type: target_profile
+      subject: usb_role
+      object: device
+    expect:
+      verdict: supported
+      reason_code: target_profile_supported
+      supporting_must_include:
+        - fact_type: target_profile
+          predicate: target_attribute
+          subject: usb_role
+          object: device
+
+  - id: hid_build_config_enabled
+    kind: verify_claim
+    claim:
+      claim_type: build_config
+      subject: CFG_TUD_HID
+      object: "1"
+    expect:
+      verdict: supported
+      reason_code: build_config_macro_value_supported
+      supporting_must_include:
+        - fact_type: build_config
+          predicate: macro_value
+          subject: CFG_TUD_HID
+          object: "1"
+
+  - id: hid_descriptor_macro_detected
+    kind: verify_claim
+    claim:
+      claim_type: usb_descriptor_semantic
+      subject: HID
+      object: desc_configuration
+      payload:
+        class: HID
+        interface_symbol: ITF_NUM_HID
+        endpoint_symbol: EPNUM_HID
+    expect:
+      verdict: supported
+      reason_code: usb_descriptor_semantic_supported
+      supporting_must_include:
+        - fact_type: usb_descriptor
+          predicate: defines_class_interface_descriptor
+          subject: HID
+          object: desc_configuration
+          payload_contains:
+            descriptor_macro: TUD_HID_DESCRIPTOR
+            usb_class: HID
+            interface_symbol: ITF_NUM_HID
+            endpoint_symbol: EPNUM_HID
+
+  - id: hid_report_descriptor_callback_provider
+    kind: verify_claim
+    claim:
+      claim_type: usb_descriptor_semantic
+      subject: tud_hid_descriptor_report_cb
+      object: desc_hid_report
+      payload:
+        predicate: provides_descriptor_callback
+        descriptor_kind: hid_report
+    expect:
+      verdict: supported
+      reason_code: usb_descriptor_semantic_supported
+      supporting_must_include:
+        - fact_type: usb_descriptor
+          predicate: provides_descriptor_callback
+          subject: tud_hid_descriptor_report_cb
+          object: desc_hid_report
+          payload_contains:
+            descriptor_kind: hid_report
+            returned_descriptor: desc_hid_report
+
+  - id: hid_report_descriptor_map_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_class_protocol_semantic
+      subject: HID
+      object: hid_report_descriptor
+      payload:
+        predicate: declares_hid_report_descriptor_map
+        class: HID
+    expect:
+      verdict: supported
+      reason_code: tinyusb_class_protocol_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_class_protocol
+          predicate: declares_hid_report_descriptor_map
+          subject: HID
+          object: hid_report_descriptor
+          payload_contains:
+            usb_class: HID
+            descriptor_kind: hid_report
+
+  - id: hid_keyboard_report_id_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_class_protocol_semantic
+      subject: REPORT_ID_KEYBOARD
+      object: keyboard
+      payload:
+        predicate: declares_hid_report_descriptor_item
+        report_kind: keyboard
+        report_id: REPORT_ID_KEYBOARD
+    expect:
+      verdict: supported
+      reason_code: tinyusb_class_protocol_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_class_protocol
+          predicate: declares_hid_report_descriptor_item
+          subject: REPORT_ID_KEYBOARD
+          object: keyboard
+          payload_contains:
+            report_kind: keyboard
+            report_id: REPORT_ID_KEYBOARD
+
+  - id: hid_mouse_report_api_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_class_protocol_semantic
+      subject: tud_hid_mouse_report
+      object: mouse
+      payload:
+        predicate: declares_hid_report_api
+        report_kind: mouse
+    expect:
+      verdict: supported
+      reason_code: tinyusb_class_protocol_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_class_protocol
+          predicate: declares_hid_report_api
+          subject: tud_hid_mouse_report
+          object: mouse
+          payload_contains:
+            api_name: tud_hid_mouse_report
+            report_kind: mouse
+            transfer_direction: in
+
+  - id: hid_get_report_callback_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_class_protocol_semantic
+      subject: tud_hid_get_report_cb
+      object: get_report
+      payload:
+        predicate: declares_hid_control_callback
+        callback_name: tud_hid_get_report_cb
+    expect:
+      verdict: supported
+      reason_code: tinyusb_class_protocol_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_class_protocol
+          predicate: declares_hid_control_callback
+          subject: tud_hid_get_report_cb
+          object: get_report
+          payload_contains:
+            usb_class: HID
+            protocol_operation: get_report
+
+  - id: hid_set_report_callback_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_class_protocol_semantic
+      subject: tud_hid_set_report_cb
+      object: set_report
+      payload:
+        predicate: declares_hid_control_callback
+        callback_name: tud_hid_set_report_cb
+    expect:
+      verdict: supported
+      reason_code: tinyusb_class_protocol_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_class_protocol
+          predicate: declares_hid_control_callback
+          subject: tud_hid_set_report_cb
+          object: set_report
+          payload_contains:
+            usb_class: HID
+            protocol_operation: set_report
+
+  - id: hid_class_driver_entry_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_driver_dispatch_semantic
+      subject: HID
+      object: _usbd_driver
+      payload:
+        predicate: declares_class_driver_entry
+        config_macro: CFG_TUD_HID
+    expect:
+      verdict: supported
+      reason_code: tinyusb_driver_dispatch_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_driver_dispatch
+          predicate: declares_class_driver_entry
+          subject: HID
+          object: _usbd_driver
+          payload_contains:
+            config_macro: CFG_TUD_HID

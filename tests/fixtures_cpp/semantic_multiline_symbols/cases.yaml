@@ -1,0 +1,18 @@
+cases:
+  - id: semantic_multiline_symbols_001
+    question: "init_device はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: app::Device::global_init
+          callee: app::init_device
+          payload_contains:
+            resolution_status: resolved
+        - fact_type: call
+          caller: app::Device::start
+          callee: app::init_device
+          payload_contains:
+            resolution_status: resolved
+    answerability: answerable
+    required_unknowns: []

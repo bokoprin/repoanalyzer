@@ -1,0 +1,12 @@
+[
+  {
+    "directory": ".",
+    "command": "g++ -Iinclude -DFEATURE_EXTRA -DFEATURE_ALT=1 -DFEATURE_ZERO=0 -DDISABLE_BY_MACRO -c src/main.cpp",
+    "file": "src/main.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "g++ -Iinclude -DFEATURE_EXTRA -DFEATURE_ALT=1 -DFEATURE_ZERO=0 -DDISABLE_BY_MACRO -c src/device.cpp",
+    "file": "src/device.cpp"
+  }
+]

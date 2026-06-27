@@ -1,0 +1,61 @@
+cases:
+  - id: dialog_creation_callback_trace
+    question: "Windows message / dialog callback はどう行われる？"
+    expected:
+      must_include:
+        - fact_type: relation
+          subject: sakura::CSearchDialog::OpenDialog
+          predicate: creates_dialog
+          object: sakura::DialogBoxParam
+        - fact_type: relation
+          subject: sakura::CSearchDialog::OpenDialog
+          predicate: registers_dialog_callback
+          object: sakura::CSearchDialog::DlgProc
+        - fact_type: call_path
+          subject: sakura::CSearchDialog::OpenDialog
+          payload_contains:
+            route_kind: dialog_creation_callback_trace
+    answerability: answerable
+    required_unknowns: []
+
+  - id: dialog_message_dispatch_trace
+    question: "Windows message / dialog callback はどう行われる？"
+    expected:
+      must_include:
+        - fact_type: relation
+          subject: sakura::CSearchDialog::DlgProc
+          predicate: handles_windows_message
+          object: WM_INITDIALOG
+        - fact_type: relation
+          subject: sakura::CSearchDialog::DlgProc
+          predicate: handles_windows_message
+          object: WM_COMMAND
+        - fact_type: relation
+          subject: sakura::CSearchDialog::DlgProc
+          predicate: handles_control_command
+          object: IDC_BUTTON_FIND
+        - fact_type: call_path
+          subject: sakura::CSearchDialog::DlgProc
+          payload_contains:
+            route_kind: dialog_message_dispatch_trace
+    answerability: answerable
+    required_unknowns: []
+
+  - id: wm_command_bridge_and_subclass_trace
+    question: "Windows message / dialog callback はどう行われる？"
+    expected:
+      must_include:
+        - fact_type: relation
+          subject: sakura::CSearchDialog::OnFindNext
+          predicate: sends_windows_message
+          object: WM_COMMAND
+        - fact_type: relation
+          subject: sakura::CPropTypesColor::InitColorList
+          predicate: registers_window_subclass_callback
+          object: sakura::CPropTypesColor::ColorList_SubclassProc
+        - fact_type: call_path
+          subject: sakura::CSearchDialog::OnFindNext
+          payload_contains:
+            route_kind: wm_command_bridge_trace
+    answerability: answerable
+    required_unknowns: []

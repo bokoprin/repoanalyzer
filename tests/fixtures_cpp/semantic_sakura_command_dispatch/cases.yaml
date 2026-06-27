@@ -1,0 +1,37 @@
+cases:
+  - id: command_id_dispatches_to_search_next
+    question: "F_SEARCH_NEXT はどこにdispatchされる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: relation
+          subject: F_SEARCH_NEXT
+          predicate: dispatches_to
+          object: sakura::CViewCommander::Command_SEARCH_NEXT
+          payload_contains:
+            relation_kind: command_dispatch
+            dispatch_kind: switch_case
+            edge_status: conditional_dispatch
+    answerability: answerable
+    required_unknowns: []
+
+  - id: search_question_produces_execution_trace
+    question: "検索はどう実行される？"
+    expected:
+      must_include:
+        - fact_type: relation
+          subject: F_SEARCH_NEXT
+          predicate: dispatches_to
+          object: sakura::CViewCommander::Command_SEARCH_NEXT
+        - fact_type: call_path
+          subject: F_SEARCH_NEXT
+          predicate: reaches
+          object: sakura::CSearchAgent::SearchString
+          payload_contains:
+            route_kind: command_execution_trace
+            command_id: F_SEARCH_NEXT
+        - fact_type: call
+          caller: sakura::CSearchAgent::SearchWord
+          callee: sakura::CSearchAgent::SearchStringWord
+    answerability: answerable
+    required_unknowns: []

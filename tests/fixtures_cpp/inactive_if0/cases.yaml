@@ -1,0 +1,30 @@
+cases:
+  - id: cpp_inactive_if0_001
+    question: "init_device はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: start_device
+          callee: init_device
+          path: src/device.cpp
+      must_not_include:
+        - fact_type: call
+          caller: ghost_entry
+          callee: init_device
+    answerability: partial
+    required_unknowns:
+      - source_without_compile_commands
+
+  - id: cpp_inactive_if0_002
+    question: "ghost_entry の定義はどこ？"
+    mode: definition
+    expected:
+      must_include: []
+      must_not_include:
+        - fact_type: symbol
+          symbol: ghost_entry
+          path: src/device.cpp
+    answerability: insufficient_evidence
+    required_unknowns:
+      - definition_not_found

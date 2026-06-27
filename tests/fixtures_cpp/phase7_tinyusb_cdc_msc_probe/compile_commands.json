@@ -1,0 +1,47 @@
+[
+  {
+    "directory": ".",
+    "command": "gcc -I. -Isrc -Isrc/common -Isrc/device -Isrc/osal -Isrc/class/cdc -Isrc/class/msc -Iexamples/device/cdc_msc/src -Ihw -DCFG_TUSB_MCU=OPT_MCU_STM32F4 -DCFG_TUSB_OS=OPT_OS_NONE -DBOARD_TUD_RHPORT=0 -DBOARD_TUD_MAX_SPEED=OPT_MODE_FULL_SPEED -DBOARD_STM32F407DISCO=1 -c examples/device/cdc_msc/src/main.c",
+    "file": "examples/device/cdc_msc/src/main.c"
+  },
+  {
+    "directory": ".",
+    "command": "gcc -I. -Isrc -Isrc/common -Isrc/device -Isrc/osal -Isrc/class/cdc -Isrc/class/msc -Iexamples/device/cdc_msc/src -Ihw -DCFG_TUSB_MCU=OPT_MCU_STM32F4 -DCFG_TUSB_OS=OPT_OS_NONE -DBOARD_TUD_RHPORT=0 -DBOARD_TUD_MAX_SPEED=OPT_MODE_FULL_SPEED -DBOARD_STM32F407DISCO=1 -c examples/device/cdc_msc/src/usb_descriptors.c",
+    "file": "examples/device/cdc_msc/src/usb_descriptors.c"
+  },
+  {
+    "directory": ".",
+    "command": "gcc -I. -Isrc -Isrc/common -Isrc/device -Isrc/osal -Isrc/class/cdc -Isrc/class/msc -Iexamples/device/cdc_msc/src -Ihw -DCFG_TUSB_MCU=OPT_MCU_STM32F4 -DCFG_TUSB_OS=OPT_OS_NONE -DBOARD_TUD_RHPORT=0 -DBOARD_TUD_MAX_SPEED=OPT_MODE_FULL_SPEED -DBOARD_STM32F407DISCO=1 -c examples/device/cdc_msc/src/msc_disk.c",
+    "file": "examples/device/cdc_msc/src/msc_disk.c"
+  },
+  {
+    "directory": ".",
+    "command": "gcc -I. -Isrc -Isrc/common -Isrc/device -Isrc/osal -Isrc/class/cdc -Isrc/class/msc -Iexamples/device/cdc_msc/src -Ihw -DCFG_TUSB_MCU=OPT_MCU_STM32F4 -DCFG_TUSB_OS=OPT_OS_NONE -DBOARD_TUD_RHPORT=0 -DBOARD_TUD_MAX_SPEED=OPT_MODE_FULL_SPEED -DBOARD_STM32F407DISCO=1 -c src/tusb.c",
+    "file": "src/tusb.c"
+  },
+  {
+    "directory": ".",
+    "command": "gcc -I. -Isrc -Isrc/common -Isrc/device -Isrc/osal -Isrc/class/cdc -Isrc/class/msc -Iexamples/device/cdc_msc/src -Ihw -DCFG_TUSB_MCU=OPT_MCU_STM32F4 -DCFG_TUSB_OS=OPT_OS_NONE -DBOARD_TUD_RHPORT=0 -DBOARD_TUD_MAX_SPEED=OPT_MODE_FULL_SPEED -DBOARD_STM32F407DISCO=1 -c src/device/usbd.c",
+    "file": "src/device/usbd.c"
+  },
+  {
+    "directory": ".",
+    "command": "gcc -I. -Isrc -Isrc/common -Isrc/device -Isrc/osal -Isrc/class/cdc -Isrc/class/msc -Iexamples/device/cdc_msc/src -Ihw -DCFG_TUSB_MCU=OPT_MCU_STM32F4 -DCFG_TUSB_OS=OPT_OS_NONE -DBOARD_TUD_RHPORT=0 -DBOARD_TUD_MAX_SPEED=OPT_MODE_FULL_SPEED -DBOARD_STM32F407DISCO=1 -c src/class/cdc/cdc_device.c",
+    "file": "src/class/cdc/cdc_device.c"
+  },
+  {
+    "directory": ".",
+    "command": "gcc -I. -Isrc -Isrc/common -Isrc/device -Isrc/osal -Isrc/class/cdc -Isrc/class/msc -Iexamples/device/cdc_msc/src -Ihw -DCFG_TUSB_MCU=OPT_MCU_STM32F4 -DCFG_TUSB_OS=OPT_OS_NONE -DBOARD_TUD_RHPORT=0 -DBOARD_TUD_MAX_SPEED=OPT_MODE_FULL_SPEED -DBOARD_STM32F407DISCO=1 -c src/class/msc/msc_device.c",
+    "file": "src/class/msc/msc_device.c"
+  },
+  {
+    "directory": ".",
+    "command": "gcc -I. -Isrc -Isrc/common -Isrc/device -Isrc/osal -Isrc/class/cdc -Isrc/class/msc -Iexamples/device/cdc_msc/src -Ihw -DCFG_TUSB_MCU=OPT_MCU_STM32F4 -DCFG_TUSB_OS=OPT_OS_NONE -DBOARD_TUD_RHPORT=0 -DBOARD_TUD_MAX_SPEED=OPT_MODE_FULL_SPEED -DBOARD_STM32F407DISCO=1 -c src/common/tusb_fifo.c",
+    "file": "src/common/tusb_fifo.c"
+  },
+  {
+    "directory": ".",
+    "command": "gcc -I. -Isrc -Isrc/common -Isrc/device -Isrc/osal -Isrc/class/cdc -Isrc/class/msc -Iexamples/device/cdc_msc/src -Ihw -DCFG_TUSB_MCU=OPT_MCU_STM32F4 -DCFG_TUSB_OS=OPT_OS_NONE -DBOARD_TUD_RHPORT=0 -DBOARD_TUD_MAX_SPEED=OPT_MODE_FULL_SPEED -DBOARD_STM32F407DISCO=1 -c src/portable/synopsys/dwc2/dcd_dwc2.c",
+    "file": "src/portable/synopsys/dwc2/dcd_dwc2.c"
+  }
+]

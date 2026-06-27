@@ -1,0 +1,48 @@
+cases:
+  - id: menu_resource_to_command_trace
+    question: "リソースID / accelerator / menu / toolbar から command ID への対応はどう行われる？"
+    expected:
+      must_include:
+        - fact_type: relation
+          predicate: binds_menu_item_to_command
+          object: F_SEARCH_NEXT
+        - fact_type: call_path
+          payload_contains:
+            route_kind: menu_resource_to_command_trace
+    answerability: answerable
+    required_unknowns: []
+
+  - id: accelerator_to_command_trace
+    question: "リソースID / accelerator / menu / toolbar から command ID への対応はどう行われる？"
+    expected:
+      must_include:
+        - fact_type: relation
+          predicate: binds_accelerator_to_command
+          object: F_SEARCH_NEXT
+        - fact_type: relation
+          subject: sakura::CKeyBind::CreateAccerelator
+          predicate: creates_accelerator_table
+          object: CreateAcceleratorTable
+        - fact_type: relation
+          subject: sakura::CKeyBind::GetFuncCode
+          predicate: translates_accelerator_to_command
+          object: EFunctionCode
+        - fact_type: call_path
+          payload_contains:
+            route_kind: accelerator_to_command_trace
+    answerability: answerable
+    required_unknowns: []
+
+  - id: toolbar_to_command_trace
+    question: "リソースID / accelerator / menu / toolbar から command ID への対応はどう行われる？"
+    expected:
+      must_include:
+        - fact_type: relation
+          subject: toolbar_slot_225
+          predicate: binds_toolbar_button_to_command
+          object: F_SEARCH_NEXT
+        - fact_type: call_path
+          payload_contains:
+            route_kind: toolbar_to_command_trace
+    answerability: answerable
+    required_unknowns: []

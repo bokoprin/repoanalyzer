@@ -1,0 +1,12 @@
+[
+  {
+    "directory": ".",
+    "command": "c++ -Iinclude -DBASE=2 -DOFFSET=1 -DSCALE=4 -DDIVIDEND=9 -DDIVISOR=3 -DMOD_VALUE=10 -DZERO=0 -c src/main.cpp",
+    "file": "src/main.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "c++ -Iinclude -DBASE=2 -DOFFSET=1 -DSCALE=4 -DDIVIDEND=9 -DDIVISOR=3 -DMOD_VALUE=10 -DZERO=0 -c src/device.cpp",
+    "file": "src/device.cpp"
+  }
+]

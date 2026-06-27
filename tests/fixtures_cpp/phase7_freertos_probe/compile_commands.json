@@ -1,0 +1,37 @@
+[
+  {
+    "directory": ".",
+    "command": "gcc -I. -Iinclude -Iportable/GCC/ARM_CM4F -DconfigSUPPORT_DYNAMIC_ALLOCATION=1 -DconfigSUPPORT_STATIC_ALLOCATION=1 -DconfigUSE_TIMERS=1 -c tasks.c",
+    "file": "tasks.c"
+  },
+  {
+    "directory": ".",
+    "command": "gcc -I. -Iinclude -Iportable/GCC/ARM_CM4F -DconfigSUPPORT_DYNAMIC_ALLOCATION=1 -DconfigSUPPORT_STATIC_ALLOCATION=1 -DconfigUSE_TIMERS=1 -c queue.c",
+    "file": "queue.c"
+  },
+  {
+    "directory": ".",
+    "command": "gcc -I. -Iinclude -Iportable/GCC/ARM_CM4F -DconfigSUPPORT_DYNAMIC_ALLOCATION=1 -DconfigSUPPORT_STATIC_ALLOCATION=1 -DconfigUSE_TIMERS=1 -c timers.c",
+    "file": "timers.c"
+  },
+  {
+    "directory": ".",
+    "command": "gcc -I. -Iinclude -Iportable/GCC/ARM_CM4F -DconfigSUPPORT_DYNAMIC_ALLOCATION=1 -DconfigSUPPORT_STATIC_ALLOCATION=1 -DconfigUSE_TIMERS=1 -c portable/GCC/ARM_CM4F/port.c",
+    "file": "portable/GCC/ARM_CM4F/port.c"
+  },
+  {
+    "directory": ".",
+    "command": "gcc -I. -Iinclude -Iportable/GCC/ARM_CM4F -DconfigSUPPORT_DYNAMIC_ALLOCATION=1 -DconfigSUPPORT_STATIC_ALLOCATION=1 -DconfigUSE_TIMERS=1 -c portable/MemMang/heap_4.c",
+    "file": "portable/MemMang/heap_4.c"
+  },
+  {
+    "directory": ".",
+    "command": "gcc -I. -Iinclude -Iportable/GCC/ARM_CM4F -DconfigSUPPORT_DYNAMIC_ALLOCATION=1 -DconfigSUPPORT_STATIC_ALLOCATION=1 -DconfigUSE_TIMERS=1 -c stream_buffer.c",
+    "file": "stream_buffer.c"
+  },
+  {
+    "directory": ".",
+    "command": "gcc -I. -Iinclude -Iportable/GCC/ARM_CM4F -DconfigSUPPORT_DYNAMIC_ALLOCATION=1 -DconfigSUPPORT_STATIC_ALLOCATION=1 -DconfigUSE_TIMERS=1 -c event_groups.c",
+    "file": "event_groups.c"
+  }
+]

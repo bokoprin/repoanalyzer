@@ -1,0 +1,12 @@
+[
+  {
+    "directory": ".",
+    "command": "g++ -Iinclude -DMODE=2 -DMINOR=5 -DLEVEL=0 -DHEX_VALUE=0x10 -DNEGATIVE_VALUE=-1 -c src/main.cpp",
+    "file": "src/main.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "g++ -Iinclude -DMODE=2 -DMINOR=5 -DLEVEL=0 -DHEX_VALUE=0x10 -DNEGATIVE_VALUE=-1 -c src/device.cpp",
+    "file": "src/device.cpp"
+  }
+]

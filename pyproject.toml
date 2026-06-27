@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "repoanalyzer"
+version = "0.2.0"
+description = "C/C++ Code Evidence Engine for MCP-based LLM agents."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "typer>=0.12.3",
+  "PyYAML>=6.0.2"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.0",
+  "ruff>=0.6.9"
+]
+mcp = [
+  "mcp>=1.2.0"
+]
+
+[project.scripts]
+repoanalyzer = "repoanalyzer.cli:app"
+repoanalyzer-mcp = "repoanalyzer.mcp.server:main"
+
+[tool.setuptools.packages.find]
+include = ["repoanalyzer*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "upstream: tests that require an external upstream checkout",
+]

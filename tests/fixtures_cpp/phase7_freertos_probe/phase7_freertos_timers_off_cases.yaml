@@ -1,0 +1,177 @@
+id: phase7_freertos_timers_off_suite
+description: >-
+  FreeRTOS-Kernel-derived target profile validating that configUSE_TIMERS=0
+  turns timer-guarded code inactive and prevents unsupported timer claims.
+ingest:
+  enabled: true
+  config: repoanalyzer_timers_off.yml
+budgets:
+  max_total_ms: 30000
+  max_ingest_ms: 20000
+  max_facts: 4000
+  max_indexed_files: 20
+expect:
+  ingest:
+    status: indexed
+    min_files: 9
+    min_facts: 180
+  repo_status:
+    clean: true
+  diagnostics:
+    min_total_facts: 150
+    min_indexed_files: 9
+    max_warnings: 0
+scenarios:
+  - id: freertos_target_profile_timers_off_name
+    kind: verify_claim
+    claim:
+      claim_type: target_profile
+      subject: name
+      object: freertos-gcc-arm-cm4f-timers-off
+    expect:
+      verdict: supported
+      reason_code: target_profile_supported
+      supporting_must_include:
+        - fact_type: target_profile
+          predicate: selected_profile
+          subject: freertos-gcc-arm-cm4f-timers-off
+
+  - id: freertos_build_config_timers_off
+    kind: verify_claim
+    claim:
+      claim_type: build_config
+      subject: configUSE_TIMERS
+      object: "0"
+    expect:
+      verdict: supported
+      reason_code: build_config_macro_value_supported
+      supporting_must_include:
+        - fact_type: build_config
+          predicate: macro_value
+          subject: configUSE_TIMERS
+          object: "0"
+
+  - id: freertos_build_config_timers_on_contradicted
+    kind: verify_claim
+    claim:
+      claim_type: build_config
+      subject: configUSE_TIMERS
+      object: "1"
+    expect:
+      verdict: contradicted
+      reason_code: build_config_macro_value_mismatch
+      contradicting_must_include:
+        - fact_type: build_config
+          predicate: macro_value
+          subject: configUSE_TIMERS
+          object: "0"
+
+
+  - id: freertos_target_file_heap4_active_timers_off
+    kind: verify_claim
+    claim:
+      claim_type: file_active
+      subject: portable/MemMang/heap_4.c
+      object: active
+    expect:
+      verdict: supported
+      reason_code: target_file_selection_supported
+      supporting_must_include:
+        - fact_type: target_file
+          predicate: file_active
+          subject: portable/MemMang/heap_4.c
+
+  - id: freertos_target_file_heap3_inactive_timers_off
+    kind: verify_claim
+    claim:
+      claim_type: file_active
+      subject: portable/MemMang/heap_3.c
+      object: inactive
+    expect:
+      verdict: supported
+      reason_code: target_file_selection_supported
+      supporting_must_include:
+        - fact_type: target_file
+          predicate: file_inactive
+          subject: portable/MemMang/heap_3.c
+
+  - id: freertos_target_file_non_selected_port_inactive_timers_off
+    kind: verify_claim
+    claim:
+      claim_type: file_active
+      subject: portable/GCC/ARM_CM3/port.c
+      object: inactive
+    expect:
+      verdict: supported
+      reason_code: target_file_selection_supported
+      supporting_must_include:
+        - fact_type: target_file
+          predicate: file_inactive
+          subject: portable/GCC/ARM_CM3/port.c
+
+  - id: freertos_timer_task_inactive_when_timers_off
+    kind: verify_claim
+    claim:
+      claim_type: build_active
+      subject: xTimerCreateTimerTask
+    expect:
+      verdict: contradicted
+      reason_code: target_only_has_inactive_build_evidence
+      contradicting_must_include:
+        - fact_type: symbol
+          predicate: definition
+          symbol: xTimerCreateTimerTask
+          payload_contains:
+            build_status: inactive
+            guard_expressions:
+              - "( configUSE_TIMERS == 1 )"
+            guard_macro_values:
+              configUSE_TIMERS: "0"
+
+  - id: freertos_scheduler_timer_call_not_active_when_timers_off
+    kind: verify_text
+    text: >-
+      vTaskStartScheduler calls xTimerCreateTimerTask.
+    expect:
+      overall_verdict: contradicted
+      min_extracted_claim_count: 1
+      verdicts_include:
+        - claim_type: calls
+          subject: vTaskStartScheduler
+          object: xTimerCreateTimerTask
+          verdict: contradicted
+          reason_code: resolved_outgoing_calls_do_not_include_target
+
+  - id: diagnostics_freertos_timers_off
+    kind: query_diagnostics
+    expect:
+      min_total_facts: 150
+      min_indexed_files: 9
+      max_warnings: 0
+
+  - id: status_freertos_timers_off
+    kind: repo_status
+    expect:
+      clean: true
+
+  - id: freertos_answer_contract_preserves_target_profile_constraints
+    kind: workflow_run
+    question: How should target-profile-specific FreeRTOS timer-off evidence be answered?
+    answer_text: >-
+      configUSE_TIMERS is 0 in the target build.
+      portable/MemMang/heap_3.c is inactive in the target profile.
+    expect:
+      status: ready
+      safety_level: safe
+      overall_verdict: supported
+      can_answer: true
+      must_not_send: false
+      contract_constraints_contain:
+        - Scope build-sensitive statements to target profile 'freertos-gcc-arm-cm4f-timers-off'
+        - source-present but inactive
+      answer_obligations_contain:
+        - active target profile
+      build_context_path_equals:
+        macros.configUSE_TIMERS: "0"
+      build_context_list_contains:
+        inactive_files: portable/MemMang/heap_3.c

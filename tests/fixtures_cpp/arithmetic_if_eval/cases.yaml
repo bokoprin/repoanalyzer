@@ -1,0 +1,62 @@
+cases:
+  - id: cpp_arithmetic_if_eval_001
+    question: "init_device はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: start_device
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: additive_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: subtract_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: multiply_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: division_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: modulo_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: parenthesized_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: unary_minus_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: arithmetic_else_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: unresolved_arithmetic_entry
+          callee: init_device
+          path: src/device.cpp
+          build_status: conditional
+        - fact_type: call
+          caller: division_by_zero_entry
+          callee: init_device
+          path: src/device.cpp
+          build_status: conditional
+      must_not_include:
+        - fact_type: call
+          caller: additive_fallback
+          callee: init_device
+        - fact_type: call
+          caller: inactive_arithmetic_entry
+          callee: init_device
+    answerability: partial
+    required_unknowns:
+      - conditional_build_evidence

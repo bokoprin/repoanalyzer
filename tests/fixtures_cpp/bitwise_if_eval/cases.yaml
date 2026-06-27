@@ -1,0 +1,62 @@
+cases:
+  - id: cpp_bitwise_if_eval_001
+    question: "init_device はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: start_device
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: bit_and_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: bit_and_fallback
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: bit_or_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: bit_xor_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: bit_xor_fallback
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: bit_not_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: left_shift_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: right_shift_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: negative_shift_entry
+          callee: init_device
+          path: src/device.cpp
+          build_status: conditional
+        - fact_type: call
+          caller: unresolved_bitwise_entry
+          callee: init_device
+          path: src/device.cpp
+          build_status: conditional
+      must_not_include:
+        - fact_type: call
+          caller: inactive_bit_and_entry
+          callee: init_device
+        - fact_type: call
+          caller: inactive_bit_xor_entry
+          callee: init_device
+    answerability: partial
+    required_unknowns:
+      - conditional_build_evidence

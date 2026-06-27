@@ -1,0 +1,47 @@
+[
+  {
+    "directory": ".",
+    "command": "clang++ -I. -Iinclude -std=c++17 -c modules/config_profile/src/config_profile.cpp",
+    "file": "modules/config_profile/src/config_profile.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "clang++ -I. -Iinclude -std=c++17 -c modules/extension_execution/src/extension_execution.cpp",
+    "file": "modules/extension_execution/src/extension_execution.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "clang++ -I. -Iinclude -std=c++17 -c modules/file_loading/src/file_loading.cpp",
+    "file": "modules/file_loading/src/file_loading.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "clang++ -I. -Iinclude -std=c++17 -c modules/grep_chain/src/grep.cpp",
+    "file": "modules/grep_chain/src/grep.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "clang++ -I. -Iinclude -std=c++17 -c modules/grep_replace/src/grep_replace.cpp",
+    "file": "modules/grep_replace/src/grep_replace.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "clang++ -I. -Iinclude -std=c++17 -c modules/search_command/src/command_dispatch.cpp",
+    "file": "modules/search_command/src/command_dispatch.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "clang++ -I. -Iinclude -std=c++17 -c modules/ui_resource/src/ui_resource.cpp",
+    "file": "modules/ui_resource/src/ui_resource.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "clang++ -I. -Iinclude -std=c++17 -c modules/undo_edit/src/undo_edit.cpp",
+    "file": "modules/undo_edit/src/undo_edit.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "clang++ -I. -Iinclude -std=c++17 -c modules/windows_message/src/windows_message.cpp",
+    "file": "modules/windows_message/src/windows_message.cpp"
+  }
+]

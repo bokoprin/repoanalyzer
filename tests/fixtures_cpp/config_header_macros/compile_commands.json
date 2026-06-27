@@ -1,0 +1,12 @@
+[
+  {
+    "directory": ".",
+    "command": "c++ -Iinclude -include include/build_config.h -c src/main.cpp",
+    "file": "src/main.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "c++ -Iinclude -include include/build_config.h -c src/device.cpp",
+    "file": "src/device.cpp"
+  }
+]

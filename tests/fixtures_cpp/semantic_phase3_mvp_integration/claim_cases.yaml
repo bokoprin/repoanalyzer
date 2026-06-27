@@ -1,0 +1,45 @@
+cases:
+  - id: claim_definition_supported
+    claim:
+      claim_type: definition_exists
+      subject: app::Device::start
+    verdict: supported
+    reason_code: definition_found
+    expected:
+      supporting_must_include:
+        - fact_type: symbol
+          qualified_name: Device::start
+          payload_contains:
+            namespace: app
+            declaration_or_definition: definition
+
+  - id: claim_calls_supported
+    claim:
+      claim_type: calls
+      subject: app::phase3_driver
+      object: app::Device::start
+    verdict: supported
+    reason_code: call_edge_supported
+    expected:
+      supporting_must_include:
+        - fact_type: call
+          caller: app::phase3_driver
+          callee: app::Device::start
+          payload_contains:
+            resolution_scope: cross_translation_unit
+
+  - id: claim_callback_conditional
+    claim:
+      claim_type: callback_registers
+      subject: app::registerCallback
+      object: app::callback_target
+    verdict: conditional
+    reason_code: callback_registration_supported
+    expected:
+      required_unknowns:
+        - callback_relation_not_execution
+      supporting_must_include:
+        - fact_type: relation
+          predicate: registers_callback
+          payload_contains:
+            callback_qualified_name: app::callback_target

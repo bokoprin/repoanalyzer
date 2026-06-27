@@ -1,0 +1,866 @@
+id: phase7_freertos_probe_suite
+description: >-
+  FreeRTOS-Kernel-derived embedded-C probe validating RTOS task creation,
+  scheduler start, tick ISR, queue send/receive paths, timer internals, and a
+  macro-wrapped task-function extraction for portTASK_FUNCTION.
+ingest:
+  enabled: true
+  config: repoanalyzer.yml
+budgets:
+  max_total_ms: 30000
+  max_ingest_ms: 20000
+  max_facts: 5000
+  max_indexed_files: 20
+expect:
+  ingest:
+    status: indexed
+    min_files: 9
+    min_facts: 180
+  repo_status:
+    clean: true
+  diagnostics:
+    min_total_facts: 150
+    min_indexed_files: 9
+    max_warnings: 0
+    file_role_min_counts:
+      project: 9
+scenarios:
+  - id: freertos_task_create_trace
+    kind: verify_text
+    text: >-
+      xTaskCreate calls prvCreateTask.
+      xTaskCreate calls prvAddNewTaskToReadyList.
+      prvCreateTask calls prvInitialiseNewTask.
+    expect:
+      overall_verdict: supported
+      min_extracted_claim_count: 3
+      verdicts_include:
+        - claim_type: calls
+          subject: xTaskCreate
+          object: prvCreateTask
+          verdict: supported
+        - claim_type: calls
+          subject: xTaskCreate
+          object: prvAddNewTaskToReadyList
+          verdict: supported
+        - claim_type: calls
+          subject: prvCreateTask
+          object: prvInitialiseNewTask
+          verdict: supported
+
+  - id: freertos_scheduler_start_trace
+    kind: verify_text
+    text: >-
+      vTaskStartScheduler calls xTimerCreateTimerTask.
+      vTaskStartScheduler calls xPortStartScheduler.
+    expect:
+      overall_verdict: supported
+      min_extracted_claim_count: 2
+      verdicts_include:
+        - claim_type: calls
+          subject: vTaskStartScheduler
+          object: xTimerCreateTimerTask
+          verdict: supported
+        - claim_type: calls
+          subject: vTaskStartScheduler
+          object: xPortStartScheduler
+          verdict: supported
+
+  - id: freertos_tick_isr_trace
+    kind: verify_text
+    text: >-
+      xPortSysTickHandler calls xTaskIncrementTick.
+    expect:
+      overall_verdict: supported
+      min_extracted_claim_count: 1
+      verdicts_include:
+        - claim_type: calls
+          subject: xPortSysTickHandler
+          object: xTaskIncrementTick
+          verdict: supported
+
+  - id: freertos_queue_send_receive_trace
+    kind: verify_text
+    text: >-
+      xQueueGenericSend calls prvCopyDataToQueue.
+      xQueueReceive calls prvCopyDataFromQueue.
+      xQueueGenericSendFromISR calls prvCopyDataToQueue.
+    expect:
+      overall_verdict: supported
+      min_extracted_claim_count: 3
+      verdicts_include:
+        - claim_type: calls
+          subject: xQueueGenericSend
+          object: prvCopyDataToQueue
+          verdict: supported
+        - claim_type: calls
+          subject: xQueueReceive
+          object: prvCopyDataFromQueue
+          verdict: supported
+        - claim_type: calls
+          subject: xQueueGenericSendFromISR
+          object: prvCopyDataToQueue
+          verdict: supported
+
+
+  - id: freertos_tick_isr_execution_context
+    kind: verify_claim
+    claim:
+      claim_type: execution_context
+      subject: xPortSysTickHandler
+      object: isr
+    expect:
+      verdict: supported
+      reason_code: execution_context_supported
+      supporting_must_include:
+        - fact_type: relation
+          predicate: has_execution_context
+          subject: xPortSysTickHandler
+          object: isr
+
+  - id: freertos_queue_task_and_isr_execution_context
+    kind: verify_text
+    text: >-
+      xQueueGenericSend runs in task context.
+      xQueueGenericSendFromISR runs in ISR context.
+      prvTimerTask runs in task context.
+    expect:
+      overall_verdict: supported
+      min_extracted_claim_count: 3
+      verdicts_include:
+        - claim_type: execution_context
+          subject: xQueueGenericSend
+          object: task
+          verdict: supported
+        - claim_type: execution_context
+          subject: xQueueGenericSendFromISR
+          object: isr
+          verdict: supported
+        - claim_type: execution_context
+          subject: prvTimerTask
+          object: task
+          verdict: supported
+
+  - id: freertos_isr_task_api_contract_distinguishes_fromisr
+    kind: workflow_run
+    question: How should FreeRTOS queue send APIs be described across ISR and task context?
+    answer_text: >-
+      xQueueGenericSend runs in task context.
+      xQueueGenericSendFromISR runs in ISR context.
+    expect:
+      status: ready
+      safety_level: safe
+      overall_verdict: supported
+      can_answer: true
+      must_not_send: false
+      contract_constraints_contain:
+        - Do not treat xQueueGenericSend and xQueueGenericSendFromISR as interchangeable
+        - Evidence includes both ISR-context and task-context APIs
+      answer_obligations_contain:
+        - distinguish xQueueGenericSend from xQueueGenericSendFromISR
+      build_context_path_equals:
+        api_contexts.xQueueGenericSend: task
+        api_contexts.xQueueGenericSendFromISR: isr
+      build_context_list_contains:
+        isr_apis: xQueueGenericSendFromISR
+        task_context_apis: xQueueGenericSend
+
+  - id: freertos_timer_create_trace
+    kind: verify_text
+    text: >-
+      xTimerCreate calls prvInitialiseNewTimer.
+      prvProcessTimerOrBlockTask calls prvProcessExpiredTimer.
+      prvProcessReceivedCommands calls xQueueReceive.
+    expect:
+      overall_verdict: supported
+      min_extracted_claim_count: 3
+      verdicts_include:
+        - claim_type: calls
+          subject: xTimerCreate
+          object: prvInitialiseNewTimer
+          verdict: supported
+        - claim_type: calls
+          subject: prvProcessTimerOrBlockTask
+          object: prvProcessExpiredTimer
+          verdict: supported
+        - claim_type: calls
+          subject: prvProcessReceivedCommands
+          object: xQueueReceive
+          verdict: supported
+
+  - id: freertos_macro_wrapped_timer_task_trace
+    kind: verify_text
+    text: >-
+      prvTimerTask calls prvProcessReceivedCommands.
+    expect:
+      overall_verdict: supported
+      min_extracted_claim_count: 1
+      verdicts_include:
+        - claim_type: calls
+          subject: prvTimerTask
+          object: prvProcessReceivedCommands
+          verdict: supported
+
+  - id: freertos_timer_callback_storage_trace
+    kind: verify_claim
+    claim:
+      claim_type: stores_callback
+      subject: prvInitialiseNewTimer
+      object: pxCallbackFunction
+    expect:
+      verdict: conditional
+      reason_code: stores_callback_supported
+      required_unknowns:
+        - callback_relation_not_execution
+      supporting_must_include:
+        - fact_type: relation
+          predicate: stores_callback
+          subject: prvInitialiseNewTimer
+          object: pxCallbackFunction
+
+  - id: freertos_timer_callback_invocation_trace
+    kind: verify_claim
+    claim:
+      claim_type: invokes_callback
+      subject: prvProcessExpiredTimer
+      object: pxCallbackFunction
+    expect:
+      verdict: conditional
+      reason_code: invokes_callback_supported
+      required_unknowns:
+        - callback_target_unknown
+      supporting_must_include:
+        - fact_type: relation
+          predicate: invokes_callback
+          subject: prvProcessExpiredTimer
+          object: pxCallbackFunction
+
+  - id: freertos_timer_callback_dataflow_trace
+    kind: verify_claim
+    claim:
+      claim_type: callback_dataflow
+      subject: xTimerCreate
+      object: prvProcessExpiredTimer
+      callback_symbol: pxCallbackFunction
+    expect:
+      verdict: conditional
+      reason_code: callback_dataflow_supported
+      required_unknowns:
+        - callback_relation_not_execution
+        - callback_target_unknown
+      supporting_must_include:
+        - fact_type: relation
+          predicate: callback_dataflows_to
+          subject: xTimerCreate
+          object: prvProcessExpiredTimer
+          payload_contains:
+            relation_kind: callback_dataflow_trace
+            callback_symbol: pxCallbackFunction
+            storage_function: prvInitialiseNewTimer
+            invocation_function: prvProcessExpiredTimer
+
+  - id: freertos_task_entry_dataflow_trace
+    kind: verify_claim
+    claim:
+      claim_type: task_entry_dataflow
+      subject: xTaskCreate
+      object: pxPortInitialiseStack
+      task_entry_symbol: pxTaskCode
+    expect:
+      verdict: conditional
+      reason_code: task_entry_dataflow_supported
+      required_unknowns:
+        - task_entry_execution_deferred
+        - scheduler_dependent_execution
+      supporting_must_include:
+        - fact_type: relation
+          predicate: task_entry_dataflows_to
+          subject: xTaskCreate
+          object: pxPortInitialiseStack
+          payload_contains:
+            relation_kind: task_entry_dataflow_trace
+            task_entry_symbol: pxTaskCode
+            storage_function: prvInitialiseNewTask
+            stack_initialiser: pxPortInitialiseStack
+
+  - id: freertos_target_profile_name
+    kind: verify_claim
+    claim:
+      claim_type: target_profile
+      subject: name
+      object: freertos-gcc-arm-cm4f-timers-on
+    expect:
+      verdict: supported
+      reason_code: target_profile_supported
+      supporting_must_include:
+        - fact_type: target_profile
+          predicate: selected_profile
+          subject: freertos-gcc-arm-cm4f-timers-on
+
+  - id: freertos_target_profile_active_port
+    kind: verify_claim
+    claim:
+      claim_type: target_profile
+      subject: active_port
+      object: portable/GCC/ARM_CM4F
+    expect:
+      verdict: supported
+      reason_code: target_profile_supported
+      supporting_must_include:
+        - fact_type: target_profile
+          predicate: target_attribute
+          subject: active_port
+          object: portable/GCC/ARM_CM4F
+
+  - id: freertos_build_config_timers_on
+    kind: verify_claim
+    claim:
+      claim_type: build_config
+      subject: configUSE_TIMERS
+      object: "1"
+    expect:
+      verdict: supported
+      reason_code: build_config_macro_value_supported
+      supporting_must_include:
+        - fact_type: build_config
+          predicate: macro_value
+          subject: configUSE_TIMERS
+          object: "1"
+
+
+  - id: freertos_target_file_active_port_selected
+    kind: verify_claim
+    claim:
+      claim_type: file_active
+      subject: portable/GCC/ARM_CM4F/port.c
+      object: active
+    expect:
+      verdict: supported
+      reason_code: target_file_selection_supported
+      supporting_must_include:
+        - fact_type: target_file
+          predicate: file_active
+          subject: portable/GCC/ARM_CM4F/port.c
+          payload_contains:
+            selection_status: active
+            active_port: portable/GCC/ARM_CM4F
+
+  - id: freertos_target_file_inactive_non_selected_port
+    kind: verify_claim
+    claim:
+      claim_type: file_active
+      subject: portable/GCC/ARM_CM3/port.c
+      object: inactive
+    expect:
+      verdict: supported
+      reason_code: target_file_selection_supported
+      supporting_must_include:
+        - fact_type: target_file
+          predicate: file_inactive
+          subject: portable/GCC/ARM_CM3/port.c
+          payload_contains:
+            selection_status: inactive
+
+  - id: freertos_target_file_heap_selection
+    kind: verify_claim
+    claim:
+      claim_type: file_active
+      subject: portable/MemMang/heap_4.c
+      object: active
+    expect:
+      verdict: supported
+      reason_code: target_file_selection_supported
+      supporting_must_include:
+        - fact_type: target_file
+          predicate: file_active
+          subject: portable/MemMang/heap_4.c
+          payload_contains:
+            selection_status: active
+            heap: heap_4
+
+  - id: freertos_timer_task_active_has_build_guard_provenance
+    kind: verify_claim
+    claim:
+      claim_type: build_active
+      subject: xTimerCreateTimerTask
+    expect:
+      verdict: supported
+      reason_code: target_has_active_build_evidence
+      supporting_must_include:
+        - fact_type: symbol
+          predicate: definition
+          symbol: xTimerCreateTimerTask
+          payload_contains:
+            build_status: active
+            guard_expressions:
+              - "( configUSE_TIMERS == 1 )"
+            guard_macro_values:
+              configUSE_TIMERS: "1"
+
+
+  - id: freertos_scheduler_semantics_trace
+    kind: verify_text
+    text: >-
+      xQueueGenericSend enters critical section.
+      xQueueGenericSendFromISR requests context switch.
+      prvProcessTimerOrBlockTask suspends scheduler.
+    expect:
+      overall_verdict: conditional
+      min_extracted_claim_count: 3
+      verdicts_include:
+        - claim_type: scheduler_semantic
+          subject: xQueueGenericSend
+          object: enters_critical_section
+          verdict: supported
+        - claim_type: scheduler_semantic
+          subject: xQueueGenericSendFromISR
+          object: requests_context_switch
+          verdict: conditional
+        - claim_type: scheduler_semantic
+          subject: prvProcessTimerOrBlockTask
+          object: suspends_scheduler
+          verdict: supported
+
+  - id: freertos_scheduler_answer_contract_preserves_semantics
+    kind: workflow_run
+    question: How should FreeRTOS queue send and timer processing scheduler semantics be described?
+    answer_text: >-
+      xQueueGenericSend enters critical section.
+      xQueueGenericSendFromISR requests context switch.
+      prvProcessTimerOrBlockTask suspends scheduler.
+    expect:
+      status: ready_with_qualifications
+      safety_level: must_qualify
+      overall_verdict: conditional
+      can_answer: true
+      must_not_send: false
+      contract_constraints_contain:
+        - preserve critical-section semantics
+        - context-switch/yield request
+        - preserve scheduler suspension/resumption semantics
+      answer_obligations_contain:
+        - Mention critical-section entry/exit semantics
+        - Qualify context-switch claims
+        - Mention scheduler-control semantics
+      build_context_path_equals:
+        api_contexts.xQueueGenericSend: task
+        api_contexts.xQueueGenericSendFromISR: isr
+      build_context_list_contains:
+        critical_section_functions: xQueueGenericSend
+        scheduler_control_functions: prvProcessTimerOrBlockTask
+        context_switch_requesters: xQueueGenericSendFromISR
+
+  - id: freertos_port_boundary_unknown_trace
+    kind: verify_text
+    text: >-
+      vTaskStartScheduler crosses port boundary to xPortStartScheduler.
+      prvInitialiseNewTask crosses port boundary to pxPortInitialiseStack.
+      xPortSysTickHandler has port boundary.
+    expect:
+      overall_verdict: conditional
+      min_extracted_claim_count: 3
+      verdicts_include:
+        - claim_type: port_boundary
+          subject: vTaskStartScheduler
+          object: xPortStartScheduler
+          verdict: conditional
+        - claim_type: port_boundary
+          subject: prvInitialiseNewTask
+          object: pxPortInitialiseStack
+          verdict: conditional
+        - claim_type: port_boundary
+          subject: xPortSysTickHandler
+          object: port_layer
+          verdict: conditional
+
+  - id: freertos_port_boundary_answer_contract_preserves_unknowns
+    kind: workflow_run
+    question: How should FreeRTOS port-layer boundaries be described?
+    answer_text: >-
+      vTaskStartScheduler crosses port boundary to xPortStartScheduler.
+      prvInitialiseNewTask crosses port boundary to pxPortInitialiseStack.
+      xPortSysTickHandler has port boundary.
+    expect:
+      status: ready_with_qualifications
+      safety_level: must_qualify
+      overall_verdict: conditional
+      can_answer: true
+      must_not_send: false
+      contract_constraints_contain:
+        - FreeRTOS port layer boundary
+        - do not claim behavior beyond the boundary
+      answer_obligations_contain:
+        - Preserve port-boundary unknowns
+      build_context_list_contains:
+        port_boundary_callers: vTaskStartScheduler
+        port_boundary_callees: xPortStartScheduler
+        port_layer_functions: pxPortInitialiseStack
+        assembly_boundary_functions: xPortStartScheduler
+        vector_table_unverified_functions: xPortSysTickHandler
+
+  - id: freertos_queue_list_state_transition_trace
+    kind: verify_text
+    text: >-
+      prvAddNewTaskToReadyList moves task to ready list.
+      vTaskPlaceOnEventList blocks task on event list.
+      xTaskRemoveFromEventList unblocks task from event list.
+      prvAddCurrentTaskToDelayedList moves task to delayed list.
+    expect:
+      overall_verdict: conditional
+      min_extracted_claim_count: 4
+      verdicts_include:
+        - claim_type: task_state_transition
+          subject: prvAddNewTaskToReadyList
+          object: moves_task_to_ready_list
+          verdict: conditional
+        - claim_type: task_state_transition
+          subject: vTaskPlaceOnEventList
+          object: blocks_task_on_event_list
+          verdict: conditional
+        - claim_type: task_state_transition
+          subject: xTaskRemoveFromEventList
+          object: unblocks_task_from_event_list
+          verdict: conditional
+        - claim_type: task_state_transition
+          subject: prvAddCurrentTaskToDelayedList
+          object: moves_task_to_delayed_list
+          verdict: conditional
+
+  - id: freertos_queue_list_answer_contract_preserves_state_transitions
+    kind: workflow_run
+    question: How should FreeRTOS queue/list task state transitions be described?
+    answer_text: >-
+      prvAddNewTaskToReadyList moves task to ready list.
+      vTaskPlaceOnEventList blocks task on event list.
+      xTaskRemoveFromEventList unblocks task from event list.
+      prvAddCurrentTaskToDelayedList moves task to delayed list.
+    expect:
+      status: ready_with_qualifications
+      safety_level: must_qualify
+      overall_verdict: conditional
+      can_answer: true
+      must_not_send: false
+      contract_constraints_contain:
+        - ready-list transition semantics
+        - event/wait list
+        - delayed-list transition semantics
+      answer_obligations_contain:
+        - ready-list/task-state transition semantics
+        - event-list blocking/wait-state semantics
+        - event-list unblocking semantics
+        - delayed-list/task wait-state transition semantics
+      build_context_list_contains:
+        ready_list_functions: prvAddNewTaskToReadyList
+        delayed_list_functions: prvAddCurrentTaskToDelayedList
+        event_blocking_functions: vTaskPlaceOnEventList
+        event_unblocking_functions: xTaskRemoveFromEventList
+
+  - id: diagnostics_freertos_probe
+    kind: query_diagnostics
+    expect:
+      min_total_facts: 150
+      min_indexed_files: 9
+      max_warnings: 0
+
+  - id: status_freertos_probe
+    kind: repo_status
+    expect:
+      clean: true
+
+  - id: freertos_kernel_object_semantics_trace
+    kind: verify_text
+    text: >-
+      xStreamBufferSend sends to stream buffer.
+      xStreamBufferReceive receives from stream buffer.
+      xMessageBufferSend sends to message buffer.
+      xMessageBufferReceive receives from message buffer.
+      xEventGroupSetBits sets event bits.
+      xEventGroupWaitBits waits for event bits.
+      xTaskGenericNotify notifies task.
+      xTaskGenericNotifyWait waits for task notification.
+      xQueueGiveFromISR gives semaphore.
+      xQueueSemaphoreTake takes semaphore.
+      xQueueGiveMutexRecursive gives mutex.
+      xQueueTakeMutexRecursive takes mutex.
+    expect:
+      overall_verdict: conditional
+      min_extracted_claim_count: 12
+      verdicts_include:
+        - claim_type: kernel_object_semantic
+          subject: xStreamBufferSend
+          object: sends_to_stream_buffer
+          verdict: conditional
+        - claim_type: kernel_object_semantic
+          subject: xStreamBufferReceive
+          object: receives_from_stream_buffer
+          verdict: conditional
+        - claim_type: kernel_object_semantic
+          subject: xMessageBufferSend
+          object: sends_to_message_buffer
+          verdict: conditional
+        - claim_type: kernel_object_semantic
+          subject: xMessageBufferReceive
+          object: receives_from_message_buffer
+          verdict: conditional
+        - claim_type: kernel_object_semantic
+          subject: xEventGroupSetBits
+          object: sets_event_bits
+          verdict: conditional
+        - claim_type: kernel_object_semantic
+          subject: xEventGroupWaitBits
+          object: waits_for_event_bits
+          verdict: conditional
+        - claim_type: kernel_object_semantic
+          subject: xTaskGenericNotify
+          object: notifies_task
+          verdict: conditional
+        - claim_type: kernel_object_semantic
+          subject: xTaskGenericNotifyWait
+          object: waits_for_task_notification
+          verdict: conditional
+        - claim_type: kernel_object_semantic
+          subject: xQueueGiveFromISR
+          object: gives_semaphore
+          verdict: conditional
+        - claim_type: kernel_object_semantic
+          subject: xQueueSemaphoreTake
+          object: takes_semaphore
+          verdict: conditional
+        - claim_type: kernel_object_semantic
+          subject: xQueueGiveMutexRecursive
+          object: gives_mutex
+          verdict: conditional
+        - claim_type: kernel_object_semantic
+          subject: xQueueTakeMutexRecursive
+          object: takes_mutex
+          verdict: conditional
+
+  - id: freertos_kernel_object_answer_contract_preserves_semantics
+    kind: workflow_run
+    question: How should FreeRTOS kernel objects be described?
+    answer_text: >-
+      xStreamBufferSend sends to stream buffer.
+      xMessageBufferSend sends to message buffer.
+      xEventGroupSetBits sets event bits.
+      xTaskGenericNotify notifies task.
+      xQueueGiveFromISR gives semaphore.
+      xQueueTakeMutexRecursive takes mutex.
+    expect:
+      status: ready_with_qualifications
+      safety_level: must_qualify
+      overall_verdict: conditional
+      can_answer: true
+      must_not_send: false
+      contract_constraints_contain:
+        - stream-buffer send/receive semantics
+        - message-buffer message-boundary semantics
+        - event-group bit semantics
+        - direct-to-task notification semantics
+        - semaphore give/take/create semantics
+        - mutex ownership/recursive-mutex semantics
+      answer_obligations_contain:
+        - stream-buffer communication semantics
+        - message-buffer semantics
+        - event-group set/clear/wait/sync semantics
+        - direct-to-task notification send/wait semantics
+        - FreeRTOS semaphore semantics
+        - FreeRTOS mutex ownership/recursive semantics
+      build_context_list_contains:
+        stream_buffer_functions: xStreamBufferSend
+        message_buffer_functions: xMessageBufferSend
+        event_group_functions: xEventGroupSetBits
+        task_notification_functions: xTaskGenericNotify
+        semaphore_functions: xQueueGiveFromISR
+        mutex_functions: xQueueTakeMutexRecursive
+
+  - id: freertos_hook_assert_trace_semantics_trace
+    kind: verify_text
+    text: >-
+      xTaskCreate invokes trace hook traceTASK_CREATE.
+      xTaskCreate invokes assert handler configASSERT.
+      pvPortMalloc invokes application hook vApplicationMallocFailedHook.
+      prvIdleTask hits coverage marker.
+    expect:
+      overall_verdict: conditional
+      min_extracted_claim_count: 4
+      verdicts_include:
+        - claim_type: hook_assert_trace_semantic
+          subject: xTaskCreate
+          object: invokes_trace_hook
+          verdict: conditional
+        - claim_type: hook_assert_trace_semantic
+          subject: xTaskCreate
+          object: invokes_assert_handler
+          verdict: conditional
+        - claim_type: hook_assert_trace_semantic
+          subject: pvPortMalloc
+          object: invokes_application_hook
+          verdict: conditional
+        - claim_type: hook_assert_trace_semantic
+          subject: prvIdleTask
+          object: coverage_marker
+          verdict: conditional
+
+  - id: freertos_hook_assert_trace_answer_contract_preserves_unknowns
+    kind: workflow_run
+    question: How should FreeRTOS hook/assert/trace evidence be described?
+    answer_text: >-
+      xTaskCreate invokes trace hook traceTASK_CREATE.
+      xTaskCreate invokes assert handler configASSERT.
+      pvPortMalloc invokes application hook vApplicationMallocFailedHook.
+      prvIdleTask hits coverage marker.
+    expect:
+      status: ready_with_qualifications
+      safety_level: must_qualify
+      overall_verdict: conditional
+      can_answer: true
+      must_not_send: false
+      contract_constraints_contain:
+        - trace hook/instrumentation semantics
+        - qualify configASSERT/assert behavior
+        - application-defined hook
+        - coverage/test marker evidence
+      answer_obligations_contain:
+        - configurable FreeRTOS trace-hook evidence
+        - configASSERT/assert-handler semantics
+        - application-hook extension semantics
+        - coverage-marker semantics
+      build_context_list_contains:
+        trace_hook_functions: xTaskCreate
+        assert_handler_functions: xTaskCreate
+        application_hook_functions: pvPortMalloc
+        coverage_marker_functions: prvIdleTask
+
+  - id: freertos_heap_allocator_semantics_trace
+    kind: verify_text
+    text: >-
+      pvPortMalloc allocates heap memory.
+      vPortFree frees heap memory.
+      prvInsertBlockIntoFreeList coalesces free blocks.
+    expect:
+      overall_verdict: conditional
+      min_extracted_claim_count: 3
+      verdicts_include:
+        - claim_type: heap_allocator_semantic
+          subject: pvPortMalloc
+          object: allocates_heap_memory
+          verdict: conditional
+        - claim_type: heap_allocator_semantic
+          subject: vPortFree
+          object: frees_heap_memory
+          verdict: conditional
+        - claim_type: heap_allocator_semantic
+          subject: prvInsertBlockIntoFreeList
+          object: coalesces_free_blocks
+          verdict: conditional
+
+  - id: freertos_heap_allocator_answer_contract_preserves_semantics
+    kind: workflow_run
+    question: How should FreeRTOS heap allocator evidence be described?
+    answer_text: >-
+      pvPortMalloc allocates heap memory.
+      vPortFree frees heap memory.
+      prvInsertBlockIntoFreeList coalesces free blocks.
+    expect:
+      status: ready_with_qualifications
+      safety_level: must_qualify
+      overall_verdict: conditional
+      can_answer: true
+      must_not_send: false
+      contract_constraints_contain:
+        - heap allocation semantics
+        - heap free semantics
+        - free-block coalescing evidence
+      answer_obligations_contain:
+        - selected-heap allocation semantics
+        - selected-heap free/deallocation semantics
+        - heap free-block coalescing semantics
+      build_context_list_contains:
+        heap_allocation_functions: pvPortMalloc
+        heap_free_functions: vPortFree
+        heap_coalescing_functions: prvInsertBlockIntoFreeList
+
+
+  - id: freertos_port_advanced_semantics_trace
+    kind: verify_text
+    text: >-
+      prvSelectHighestPriorityTask uses SMP scheduler.
+      xTaskCreateAffinitySet uses core affinity.
+      prvYieldCore uses cross-core yield.
+      xTaskCreateRestricted configures MPU regions.
+      xPortIsAuthorizedToAccessBuffer checks MPU access.
+      MPU_xTaskCreate crosses privilege boundary.
+      vPortSVCHandler uses port assembly.
+      SecureContext_LoadContext uses secure context boundary.
+    expect:
+      overall_verdict: conditional
+      min_extracted_claim_count: 8
+      verdicts_include:
+        - claim_type: port_advanced_semantic
+          subject: prvSelectHighestPriorityTask
+          object: uses_smp_scheduler
+          verdict: conditional
+        - claim_type: port_advanced_semantic
+          subject: xTaskCreateAffinitySet
+          object: uses_core_affinity
+          verdict: conditional
+        - claim_type: port_advanced_semantic
+          subject: prvYieldCore
+          object: uses_cross_core_yield
+          verdict: conditional
+        - claim_type: port_advanced_semantic
+          subject: xTaskCreateRestricted
+          object: configures_mpu_regions
+          verdict: conditional
+        - claim_type: port_advanced_semantic
+          subject: xPortIsAuthorizedToAccessBuffer
+          object: checks_mpu_access
+          verdict: conditional
+        - claim_type: port_advanced_semantic
+          subject: MPU_xTaskCreate
+          object: crosses_privilege_boundary
+          verdict: conditional
+        - claim_type: port_advanced_semantic
+          subject: vPortSVCHandler
+          object: uses_port_assembly
+          verdict: conditional
+        - claim_type: port_advanced_semantic
+          subject: SecureContext_LoadContext
+          object: uses_secure_context_boundary
+          verdict: conditional
+
+  - id: freertos_port_advanced_answer_contract_preserves_unknowns
+    kind: workflow_run
+    question: How should FreeRTOS SMP/MPU/advanced port evidence be described?
+    answer_text: >-
+      prvSelectHighestPriorityTask uses SMP scheduler.
+      xTaskCreateAffinitySet uses core affinity.
+      xTaskCreateRestricted configures MPU regions.
+      MPU_xTaskCreate crosses privilege boundary.
+      vPortSVCHandler uses port assembly.
+      SecureContext_LoadContext uses secure context boundary.
+    expect:
+      status: ready_with_qualifications
+      safety_level: must_qualify
+      overall_verdict: conditional
+      can_answer: true
+      must_not_send: false
+      contract_constraints_contain:
+        - preserve SMP scheduler semantics
+        - preserve FreeRTOS core-affinity semantics
+        - preserve MPU/privilege semantics
+        - advanced port assembly evidence
+        - secure-context boundary semantics
+      answer_obligations_contain:
+        - SMP scheduler/core-count dependence
+        - core-affinity/profile dependence
+        - MPU/privilege target-specific constraints
+        - assembly/startup boundary behavior
+        - secure-context target-port dependence
+      build_context_list_contains:
+        smp_functions: prvSelectHighestPriorityTask
+        core_affinity_functions: xTaskCreateAffinitySet
+        mpu_functions: xTaskCreateRestricted
+        privilege_boundary_functions: MPU_xTaskCreate
+        port_assembly_functions: vPortSVCHandler
+        secure_context_functions: SecureContext_LoadContext

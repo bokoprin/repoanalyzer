@@ -1,0 +1,49 @@
+cases:
+  - id: cpp_macro_reference_eval_001
+    question: "init_device はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: start_device
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: cli_alias_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: header_alias_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: negative_alias_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: zero_alias_fallback
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: unresolved_alias_entry
+          callee: init_device
+          path: src/device.cpp
+          build_status: conditional
+        - fact_type: call
+          caller: cycle_alias_entry
+          callee: init_device
+          path: src/device.cpp
+          build_status: conditional
+      must_not_include:
+        - fact_type: call
+          caller: cli_alias_fallback
+          callee: init_device
+        - fact_type: call
+          caller: header_alias_fallback
+          callee: init_device
+        - fact_type: call
+          caller: zero_alias_entry
+          callee: init_device
+    answerability: partial
+    required_unknowns:
+      - conditional_build_evidence

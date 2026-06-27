@@ -1,0 +1,51 @@
+cases:
+  - id: cpp_complex_if_eval_001
+    question: "init_device はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: start_device
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: complex_active_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: zero_and_fallback
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: true_or_unknown_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: not_zero_and_alt_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: disabled_by_macro_fallback
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: unresolved_complex_entry
+          callee: init_device
+          path: src/device.cpp
+          build_status: conditional
+      must_not_include:
+        - fact_type: call
+          caller: complex_inactive_fallback
+          callee: init_device
+        - fact_type: call
+          caller: zero_and_entry
+          callee: init_device
+        - fact_type: call
+          caller: true_or_unknown_fallback
+          callee: init_device
+        - fact_type: call
+          caller: disabled_by_macro_entry
+          callee: init_device
+    answerability: partial
+    required_unknowns:
+      - conditional_build_evidence

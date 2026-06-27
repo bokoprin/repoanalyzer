@@ -1,0 +1,12 @@
+[
+  {
+    "directory": ".",
+    "command": "c++ -Iinclude -DFLAGS=0x03 -DENABLE_A=0x01 -DENABLE_B=0x02 -DDISABLED_FLAG=0x04 -DZERO_VALUE=0 -DSHIFT_BASE=1 -DSHIFT_AMOUNT=3 -DNEGATIVE_SHIFT=-1 -c src/main.cpp",
+    "file": "src/main.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "c++ -Iinclude -DFLAGS=0x03 -DENABLE_A=0x01 -DENABLE_B=0x02 -DDISABLED_FLAG=0x04 -DZERO_VALUE=0 -DSHIFT_BASE=1 -DSHIFT_AMOUNT=3 -DNEGATIVE_SHIFT=-1 -c src/device.cpp",
+    "file": "src/device.cpp"
+  }
+]

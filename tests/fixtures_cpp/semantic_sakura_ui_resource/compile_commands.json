@@ -1,0 +1,7 @@
+[
+  {
+    "directory": ".",
+    "command": "clang++ -Iinclude -std=c++17 -c src/ui_resource.cpp",
+    "file": "src/ui_resource.cpp"
+  }
+]

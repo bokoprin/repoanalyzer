@@ -1,0 +1,180 @@
+id: phase7_freertos_static_only_allocation_suite
+description: >-
+  FreeRTOS-Kernel-derived target profile validating that
+  configSUPPORT_DYNAMIC_ALLOCATION=0 and configSUPPORT_STATIC_ALLOCATION=1
+  make dynamic allocation APIs inactive while keeping static allocation APIs active.
+ingest:
+  enabled: true
+  config: repoanalyzer_static_only.yml
+budgets:
+  max_total_ms: 30000
+  max_ingest_ms: 20000
+  max_facts: 5000
+  max_indexed_files: 20
+expect:
+  ingest:
+    status: indexed
+    min_files: 9
+    min_facts: 220
+  repo_status:
+    clean: true
+  diagnostics:
+    min_total_facts: 200
+    min_indexed_files: 9
+    max_warnings: 0
+scenarios:
+  - id: freertos_target_profile_static_only_name
+    kind: verify_claim
+    claim:
+      claim_type: target_profile
+      subject: name
+      object: freertos-gcc-arm-cm4f-static-only
+    expect:
+      verdict: supported
+      reason_code: target_profile_supported
+
+  - id: freertos_allocation_profile_dynamic_disabled
+    kind: verify_claim
+    claim:
+      claim_type: allocation_profile
+      subject: dynamic
+      object: disabled
+    expect:
+      verdict: supported
+      reason_code: allocation_profile_supported
+      supporting_must_include:
+        - fact_type: target_profile
+          predicate: allocation_setting
+          subject: dynamic_allocation
+          object: disabled
+
+  - id: freertos_allocation_profile_static_enabled
+    kind: verify_text
+    text: >-
+      static allocation is enabled in the target profile.
+      dynamic allocation is disabled in the target profile.
+    expect:
+      overall_verdict: supported
+      min_extracted_claim_count: 2
+      verdicts_include:
+        - claim_type: allocation_profile
+          subject: static
+          object: enabled
+          verdict: supported
+        - claim_type: allocation_profile
+          subject: dynamic
+          object: disabled
+          verdict: supported
+
+  - id: freertos_dynamic_task_create_inactive_static_only
+    kind: verify_claim
+    claim:
+      claim_type: build_active
+      subject: xTaskCreate
+    expect:
+      verdict: contradicted
+      reason_code: target_only_has_inactive_build_evidence
+      contradicting_must_include:
+        - fact_type: symbol
+          predicate: definition
+          symbol: xTaskCreate
+          payload_contains:
+            build_status: inactive
+
+  - id: freertos_static_task_create_active_static_only
+    kind: verify_claim
+    claim:
+      claim_type: build_active
+      subject: xTaskCreateStatic
+    expect:
+      verdict: supported
+      reason_code: target_has_active_build_evidence
+      supporting_must_include:
+        - fact_type: symbol
+          predicate: definition
+          symbol: xTaskCreateStatic
+          payload_contains:
+            build_status: active
+
+  - id: freertos_dynamic_timer_create_inactive_static_only
+    kind: verify_claim
+    claim:
+      claim_type: build_active
+      subject: xTimerCreate
+    expect:
+      verdict: contradicted
+      reason_code: target_only_has_inactive_build_evidence
+      contradicting_must_include:
+        - fact_type: symbol
+          predicate: definition
+          symbol: xTimerCreate
+          payload_contains:
+            build_status: inactive
+
+  - id: freertos_static_timer_create_active_static_only
+    kind: verify_claim
+    claim:
+      claim_type: build_active
+      subject: xTimerCreateStatic
+    expect:
+      verdict: supported
+      reason_code: target_has_active_build_evidence
+      supporting_must_include:
+        - fact_type: symbol
+          predicate: definition
+          symbol: xTimerCreateStatic
+          payload_contains:
+            build_status: active
+
+  - id: freertos_dynamic_queue_create_inactive_static_only
+    kind: verify_claim
+    claim:
+      claim_type: build_active
+      subject: xQueueGenericCreate
+    expect:
+      verdict: contradicted
+      reason_code: target_only_has_inactive_build_evidence
+      contradicting_must_include:
+        - fact_type: symbol
+          predicate: definition
+          symbol: xQueueGenericCreate
+          payload_contains:
+            build_status: inactive
+
+  - id: freertos_static_queue_create_active_static_only
+    kind: verify_claim
+    claim:
+      claim_type: build_active
+      subject: xQueueGenericCreateStatic
+    expect:
+      verdict: supported
+      reason_code: target_has_active_build_evidence
+      supporting_must_include:
+        - fact_type: symbol
+          predicate: definition
+          symbol: xQueueGenericCreateStatic
+          payload_contains:
+            build_status: active
+
+  - id: freertos_answer_contract_preserves_allocation_profile
+    kind: workflow_run
+    question: How should FreeRTOS static-only allocation evidence be answered?
+    answer_text: >-
+      dynamic allocation is disabled in the target profile.
+      static allocation is enabled in the target profile.
+    expect:
+      status: ready
+      safety_level: safe
+      overall_verdict: supported
+      can_answer: true
+      must_not_send: false
+      contract_constraints_contain:
+        - dynamic allocation is disabled
+        - static allocation is enabled
+      answer_obligations_contain:
+        - allocation setting
+      build_context_path_equals:
+        macros.configSUPPORT_DYNAMIC_ALLOCATION: "0"
+        macros.configSUPPORT_STATIC_ALLOCATION: "1"
+        allocation_profile.dynamic: disabled
+        allocation_profile.static: enabled

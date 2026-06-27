@@ -1,0 +1,185 @@
+id: phase7_sakura_cross_trace_suite
+description: >-
+  Larger Sakura Editor-derived snapshot that validates all Sakura semantic traces
+  added during Phase7 hardening: UI command dispatch, search/grep, grep replace,
+  undo/redo, file loading and encoding, config/profile I/O, Windows message/dialog
+  callbacks, UI resources, macro/plugin/external command execution.
+ingest:
+  enabled: true
+budgets:
+  max_total_ms: 30000
+  max_ingest_ms: 20000
+  max_facts: 3000
+  max_indexed_files: 40
+expect:
+  ingest:
+    status: indexed
+    min_files: 17
+    min_facts: 1000
+  repo_status:
+    clean: true
+  diagnostics:
+    min_total_facts: 1000
+    min_indexed_files: 17
+    max_warnings: 0
+    file_role_min_counts:
+      project: 17
+scenarios:
+  - id: search_command_execution_trace
+    kind: collect_evidence
+    question: 検索はどう実行される？
+    expect:
+      answerability: answerable
+      must_include:
+        - fact_type: relation
+          subject: F_SEARCH_NEXT
+          predicate: dispatches_to
+          object: sakura::CViewCommander::Command_SEARCH_NEXT
+        - fact_type: call_path
+          payload_contains:
+            route_kind: command_execution_trace
+      required_unknowns: []
+  - id: grep_receiver_chain_trace
+    kind: collect_evidence
+    question: sakura::CViewCommander::Command_ADDTAIL はどこから呼ばれる？
+    mode: callers
+    expect:
+      answerability: answerable
+      must_include:
+        - fact_type: call
+          caller: sakura::CGrepAgent::AddTail
+          callee: sakura::CViewCommander::Command_ADDTAIL
+      required_unknowns: []
+  - id: grep_replace_writer_trace
+    kind: collect_evidence
+    question: sakura::CWriteData::AppendBuffer はどこから呼ばれる？
+    mode: callers
+    expect:
+      answerability: answerable
+      must_include:
+        - fact_type: call
+          caller: sakura::CGrepAgent::DoGrepReplaceFile
+          callee: sakura::CWriteData::AppendBuffer
+      required_unknowns: []
+  - id: undo_redo_edit_trace
+    kind: collect_evidence
+    question: Undo/Redo と編集操作はどう追跡される？
+    expect:
+      answerability: answerable
+      must_include:
+        - fact_type: call_path
+          payload_contains:
+            route_kind: edit_command_trace
+        - fact_type: call_path
+          payload_contains:
+            route_kind: undo_execution_trace
+        - fact_type: call_path
+          payload_contains:
+            route_kind: redo_execution_trace
+      required_unknowns: []
+  - id: file_loading_encoding_trace
+    kind: collect_evidence
+    question: ファイル読み込み・文字コード判定はどう行われる？
+    expect:
+      answerability: answerable
+      must_include:
+        - fact_type: call_path
+          payload_contains:
+            route_kind: file_open_encoding_trace
+        - fact_type: call_path
+          payload_contains:
+            route_kind: line_read_conversion_trace
+        - fact_type: call_path
+          payload_contains:
+            route_kind: encoding_detector_trace
+      required_unknowns: []
+  - id: config_profile_io_trace
+    kind: collect_evidence
+    question: 設定読み書き / CShareData / CommonSetting / profile / ini系はどう行われる？
+    expect:
+      answerability: answerable
+      must_include:
+        - fact_type: call_path
+          payload_contains:
+            route_kind: profile_core_io_trace
+        - fact_type: call_path
+          payload_contains:
+            route_kind: mru_section_profile_mapping_trace
+        - fact_type: relation
+          subject: sakura::CShareData_IO::ShareData_IO_2
+          predicate: accesses_common_setting
+          object: sakura::DLLSHAREDATA::m_Common
+      required_unknowns: []
+  - id: windows_message_dialog_trace
+    kind: collect_evidence
+    question: Windows message / dialog callback はどう行われる？
+    expect:
+      answerability: answerable
+      must_include:
+        - fact_type: call_path
+          payload_contains:
+            route_kind: dialog_creation_callback_trace
+        - fact_type: call_path
+          payload_contains:
+            route_kind: dialog_message_dispatch_trace
+        - fact_type: call_path
+          payload_contains:
+            route_kind: subclass_callback_registration_trace
+      required_unknowns: []
+  - id: ui_resource_command_binding_trace
+    kind: collect_evidence
+    question: リソースID / accelerator / menu / toolbar から command ID への対応はどう行われる？
+    expect:
+      answerability: answerable
+      must_include:
+        - fact_type: call_path
+          payload_contains:
+            route_kind: menu_resource_to_command_trace
+        - fact_type: call_path
+          payload_contains:
+            route_kind: accelerator_to_command_trace
+        - fact_type: call_path
+          payload_contains:
+            route_kind: toolbar_to_command_trace
+      required_unknowns: []
+  - id: extension_execution_trace
+    kind: collect_evidence
+    question: プラグイン / マクロ / 外部コマンド実行経路はどう行われる？
+    expect:
+      answerability: answerable
+      must_include:
+        - fact_type: call_path
+          payload_contains:
+            route_kind: macro_command_execution_trace
+        - fact_type: call_path
+          payload_contains:
+            route_kind: plugin_hook_invocation_trace
+        - fact_type: call_path
+          payload_contains:
+            route_kind: external_command_launch_trace
+      required_unknowns: []
+  - id: search_claim_text_supported
+    kind: verify_text
+    text: sakura::CViewCommander::Command_SEARCH_NEXT calls sakura::CLayoutMgr::SearchWord. sakura::CSearchAgent::SearchWord calls sakura::CSearchAgent::SearchString.
+    expect:
+      overall_verdict: supported
+      min_extracted_claim_count: 2
+      verdicts_include:
+        - claim_type: calls
+          subject: sakura::CViewCommander::Command_SEARCH_NEXT
+          object: sakura::CLayoutMgr::SearchWord
+          verdict: supported
+        - claim_type: calls
+          subject: sakura::CSearchAgent::SearchWord
+          object: sakura::CSearchAgent::SearchString
+          verdict: supported
+  - id: diagnostics_cross_trace_snapshot
+    kind: query_diagnostics
+    expect:
+      min_total_facts: 1000
+      min_indexed_files: 17
+      max_warnings: 0
+  - id: status_cross_trace_snapshot
+    kind: repo_status
+    expect:
+      clean: true

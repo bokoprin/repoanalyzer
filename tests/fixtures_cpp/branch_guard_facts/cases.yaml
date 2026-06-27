@@ -1,0 +1,27 @@
+- id: callers_with_branch_guards
+  question: "init_device はどこから呼ばれる？"
+  mode: callers
+  answerability: partial
+  expected:
+    must_include:
+      - fact_type: call
+        caller: start_device
+        callee: init_device
+      - fact_type: call
+        caller: b_entry
+        callee: init_device
+      - fact_type: call
+        caller: unknown_entry
+        callee: init_device
+      - fact_type: call
+        caller: maybe_b_entry
+        callee: init_device
+    must_not_include:
+      - fact_type: call
+        caller: a_entry
+        callee: init_device
+      - fact_type: call
+        caller: fallback_entry
+        callee: init_device
+  required_unknowns:
+    - conditional_build_evidence

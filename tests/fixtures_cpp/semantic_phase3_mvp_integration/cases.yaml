@@ -1,0 +1,45 @@
+cases:
+  - id: semantic_phase3_mvp_alias_member_001
+    question: "app::Device::start はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: app::phase3_driver
+          callee: app::Device::start
+          call_kind: member_direct
+          payload_contains:
+            resolution_status: resolved
+            resolution_scope: cross_translation_unit
+            callee_definition_path: src/device.cpp
+    answerability: answerable
+    required_unknowns: []
+
+  - id: semantic_phase3_mvp_callback_002
+    question: "app::callback_target はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: relation
+          predicate: registers_callback
+          object: callback_target
+          payload_contains:
+            callback_qualified_name: app::callback_target
+            callback_resolution_status: resolved_candidate
+    answerability: partial
+    required_unknowns:
+      - callback_relation_not_execution
+
+  - id: semantic_phase3_mvp_template_unknown_003
+    question: "app::passthrough の定義は？"
+    mode: definition
+    expected:
+      must_include:
+        - fact_type: symbol
+          symbol: passthrough
+          payload_contains:
+            unknown_type: unsupported_cpp_construct
+            unsupported_cpp_construct_kind: template_declaration
+    answerability: partial
+    required_unknowns:
+      - unsupported_cpp_construct

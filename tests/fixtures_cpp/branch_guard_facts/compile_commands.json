@@ -1,0 +1,12 @@
+[
+  {
+    "directory": ".",
+    "command": "g++ -DFEATURE_A=0 -DFEATURE_B=1 -c src/device.cpp",
+    "file": "src/device.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "g++ -DFEATURE_A=0 -DFEATURE_B=1 -c src/main.cpp",
+    "file": "src/main.cpp"
+  }
+]

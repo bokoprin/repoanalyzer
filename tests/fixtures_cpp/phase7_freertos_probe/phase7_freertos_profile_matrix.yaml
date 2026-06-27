@@ -1,0 +1,93 @@
+id: freertos_probe_profile_matrix
+profiles:
+  - id: timers_on
+    config: repoanalyzer.yml
+  - id: timers_off
+    config: repoanalyzer_timers_off.yml
+  - id: dynamic_only
+    config: repoanalyzer_dynamic_only.yml
+  - id: static_only
+    config: repoanalyzer_static_only.yml
+targets:
+  - id: timer_service_task
+    claim_type: build_active
+    subject: xTimerCreateTimerTask
+  - id: dynamic_task_create
+    claim_type: build_active
+    subject: xTaskCreate
+  - id: static_task_create
+    claim_type: build_active
+    subject: xTaskCreateStatic
+  - id: dynamic_timer_create
+    claim_type: build_active
+    subject: xTimerCreate
+  - id: static_timer_create
+    claim_type: build_active
+    subject: xTimerCreateStatic
+  - id: dynamic_queue_create
+    claim_type: build_active
+    subject: xQueueGenericCreate
+  - id: static_queue_create
+    claim_type: build_active
+    subject: xQueueGenericCreateStatic
+  - id: selected_heap
+    claim_type: file_active
+    subject: portable/MemMang/heap_4.c
+    object: active
+  - id: non_selected_heap
+    claim_type: file_active
+    subject: portable/MemMang/heap_3.c
+    object: inactive
+answer_contracts:
+  - id: allocation_contract
+    text: dynamic allocation is disabled in the target profile. static allocation is enabled in the target profile.
+  - id: timer_contract
+    text: configUSE_TIMERS is 0 in the target build. xTimerCreateTimerTask is active in the target build.
+expect:
+  targets:
+    timer_service_task:
+      changed: true
+      statuses:
+        timers_on: active
+        timers_off: inactive
+    dynamic_task_create:
+      changed: true
+      statuses:
+        dynamic_only: active
+        static_only: inactive
+    static_task_create:
+      changed: true
+      statuses:
+        dynamic_only: inactive
+        static_only: active
+  profiles:
+    timers_on:
+      macros:
+        configUSE_TIMERS: 1
+      targets:
+        timer_service_task:
+          status: active
+    timers_off:
+      macros:
+        configUSE_TIMERS: 0
+      targets:
+        timer_service_task:
+          status: inactive
+    dynamic_only:
+      macros:
+        configSUPPORT_DYNAMIC_ALLOCATION: 1
+        configSUPPORT_STATIC_ALLOCATION: 0
+      targets:
+        dynamic_task_create:
+          status: active
+        static_task_create:
+          status: inactive
+    static_only:
+      macros:
+        configSUPPORT_DYNAMIC_ALLOCATION: 0
+        configSUPPORT_STATIC_ALLOCATION: 1
+      targets:
+        dynamic_task_create:
+          status: inactive
+        static_task_create:
+          status: active

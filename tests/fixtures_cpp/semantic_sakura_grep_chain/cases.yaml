@@ -1,0 +1,44 @@
+cases:
+  - id: grep_addtail_command_addtail
+    question: "sakura::CViewCommander::Command_ADDTAIL はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: sakura::CGrepAgent::AddTail
+          callee: sakura::CViewCommander::Command_ADDTAIL
+          call_kind: member_direct
+          payload_contains:
+            resolution_status: resolved
+            receiver_type_resolved: sakura::CViewCommander
+    answerability: answerable
+    required_unknowns: []
+
+  - id: grep_tree_static_singleton_chain
+    question: "sakura::CEditWnd::SetDrawSwitchOfAllViews はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: sakura::CGrepAgent::DoGrepTree
+          callee: sakura::CEditWnd::SetDrawSwitchOfAllViews
+          call_kind: member_direct
+          payload_contains:
+            resolution_status: resolved
+            receiver_type_resolved: sakura::CEditWnd
+    answerability: answerable
+    required_unknowns: []
+
+  - id: grep_file_search_string
+    question: "sakura::CSearchAgent::SearchString はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: sakura::CGrepAgent::DoGrepFile
+          callee: sakura::CSearchAgent::SearchString
+          call_kind: static_member
+          payload_contains:
+            resolution_status: resolved
+    answerability: answerable
+    required_unknowns: []

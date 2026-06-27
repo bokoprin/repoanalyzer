@@ -1,0 +1,22 @@
+cases:
+  - id: unsupported_preprocessor_expression_callers
+    question: init_device はどこから呼ばれる？
+    mode: callers
+    answerability: partial
+    expected:
+      must_include:
+        - fact_type: call
+          caller: start_device
+          callee: init_device
+        - fact_type: call
+          caller: ternary_entry
+          callee: init_device
+        - fact_type: call
+          caller: function_like_entry
+          callee: init_device
+        - fact_type: call
+          caller: unresolved_entry
+          callee: init_device
+    required_unknowns:
+      - conditional_build_evidence
+      - unsupported_preprocessor_expression

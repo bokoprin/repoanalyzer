@@ -1,0 +1,57 @@
+cases:
+  - id: profile_core_io_trace
+    question: "設定読み書き / CShareData / CommonSetting / profile / ini系はどう行われる？"
+    expected:
+      must_include:
+        - fact_type: relation
+          subject: sakura::CShareData_IO::ShareData_IO_2
+          predicate: reads_profile
+          object: sakura::CDataProfile::ReadProfile
+        - fact_type: relation
+          subject: sakura::CShareData_IO::ShareData_IO_2
+          predicate: writes_profile
+          object: sakura::CDataProfile::WriteProfile
+        - fact_type: relation
+          subject: sakura::CShareData_IO::ShareData_IO_2
+          predicate: loads_config_section
+          object: sakura::CShareData_IO::ShareData_IO_Common
+        - fact_type: call_path
+          subject: sakura::CShareData_IO::ShareData_IO_2
+          payload_contains:
+            route_kind: profile_core_io_trace
+    answerability: answerable
+    required_unknowns: []
+
+  - id: mru_section_profile_mapping_trace
+    question: "設定読み書き / CShareData / CommonSetting / profile / ini系はどう行われる？"
+    expected:
+      must_include:
+        - fact_type: relation
+          subject: sakura::CShareData_IO::ShareData_IO_Mru
+          predicate: accesses_shared_data
+          object: sakura::GetDllShareData
+        - fact_type: relation
+          subject: sakura::CShareData_IO::ShareData_IO_Mru
+          predicate: maps_profile_key
+          object: sakura::CDataProfile::IOProfileData
+        - fact_type: call_path
+          subject: sakura::CShareData_IO::ShareData_IO_Mru
+          payload_contains:
+            route_kind: mru_section_profile_mapping_trace
+    answerability: answerable
+    required_unknowns: []
+
+  - id: load_and_save_entry_trace
+    question: "設定読み書き / CShareData / CommonSetting / profile / ini系はどう行われる？"
+    expected:
+      must_include:
+        - fact_type: relation
+          subject: sakura::CShareData_IO::LoadShareData
+          predicate: runs_profile_io
+          object: sakura::CShareData_IO::ShareData_IO_2
+        - fact_type: relation
+          subject: sakura::CShareData_IO::SaveShareData
+          predicate: runs_profile_io
+          object: sakura::CShareData_IO::ShareData_IO_2
+    answerability: answerable
+    required_unknowns: []

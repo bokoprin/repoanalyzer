@@ -1,0 +1,452 @@
+diff -ruN '--exclude=__pycache__' '--exclude=.pytest_cache' '--exclude=.repoanalyzer-index' repoanalyzer_prev_if0/repoanalyzer/cpp/build_guards.py repoanalyzer_work_if0/repoanalyzer/cpp/build_guards.py
+--- repoanalyzer_prev_if0/repoanalyzer/cpp/build_guards.py	2026-06-21 04:07:59.000000000 +0000
++++ repoanalyzer_work_if0/repoanalyzer/cpp/build_guards.py	2026-06-21 04:13:21.629136955 +0000
+@@ -5,20 +5,20 @@
+ from repoanalyzer.core.models import CodeFact
+ from .inactive_regions import is_always_false_if_expression
+ 
+-_IFDEF_RE = re.compile(r'^\s*#\s*(ifdef|ifndef|if)\s+(?P<expr>.+?)\s*$')
++_IFDEF_RE = re.compile(r'^\s*#\s*(?P<directive>ifdef|ifndef|if)\s+(?P<expr>.+?)\s*$')
+ _ENDIF_RE = re.compile(r'^\s*#\s*endif\b')
+ 
+ 
+ def extract_build_guards(path: str, text: str) -> list[CodeFact]:
+-    stack: list[tuple[str, int]] = []
++    stack: list[tuple[str, str, int]] = []
+     facts: list[CodeFact] = []
+     for lineno, line in enumerate(text.splitlines(), start=1):
+         m = _IFDEF_RE.match(line)
+         if m:
+-            stack.append((m.group("expr"), lineno))
++            stack.append((m.group("directive"), m.group("expr"), lineno))
+             continue
+         if _ENDIF_RE.match(line) and stack:
+-            expr, start = stack.pop()
++            directive, expr, start = stack.pop()
+             facts.append(
+                 CodeFact(
+                     fact_type="build_guard",
+@@ -30,10 +30,10 @@
+                     object=expr,
+                     confidence="medium",
+                     source="regex_cpp_minimal",
+-                    payload={"expression": expr, "status": _guard_status(expr)},
++                    payload={"directive": directive, "expression": expr, "status": _guard_status(directive, expr)},
+                 )
+             )
+-    for expr, start in stack:
++    for directive, expr, start in stack:
+         facts.append(
+             CodeFact(
+                 fact_type="build_guard",
+@@ -45,13 +45,13 @@
+                 object=expr,
+                 confidence="low",
+                 source="regex_cpp_minimal",
+-                payload={"expression": expr, "status": "unclosed"},
++                payload={"directive": directive, "expression": expr, "status": "unclosed"},
+             )
+         )
+     return facts
+ 
+ 
+-def _guard_status(expression: str) -> str:
+-    if is_always_false_if_expression(expression):
++def _guard_status(directive: str, expression: str) -> str:
++    if directive == "if" and is_always_false_if_expression(expression):
+         return "inactive"
+-    return "unknown"
++    return "conditional"
+diff -ruN '--exclude=__pycache__' '--exclude=.pytest_cache' '--exclude=.repoanalyzer-index' repoanalyzer_prev_if0/repoanalyzer/cpp/conditional_regions.py repoanalyzer_work_if0/repoanalyzer/cpp/conditional_regions.py
+--- repoanalyzer_prev_if0/repoanalyzer/cpp/conditional_regions.py	1970-01-01 00:00:00.000000000 +0000
++++ repoanalyzer_work_if0/repoanalyzer/cpp/conditional_regions.py	2026-06-21 04:13:19.914854341 +0000
+@@ -0,0 +1,135 @@
++from __future__ import annotations
++
++import re
++from dataclasses import dataclass
++
++from .inactive_regions import is_always_false_if_expression
++
++_IF_RE = re.compile(r"^\s*#\s*(?P<directive>ifdef|ifndef|if)\s+(?P<expr>.+?)\s*(?://.*)?$")
++_ELIF_RE = re.compile(r"^\s*#\s*elif\s+(?P<expr>.+?)\s*(?://.*)?$")
++_ELSE_RE = re.compile(r"^\s*#\s*else\b")
++_ENDIF_RE = re.compile(r"^\s*#\s*endif\b")
++
++
++@dataclass(frozen=True)
++class ConditionalGuard:
++    directive: str
++    expression: str
++    line: int
++
++    def to_dict(self) -> dict[str, str | int]:
++        return {"directive": self.directive, "expression": self.expression, "line": self.line}
++
++
++@dataclass
++class _Frame:
++    opening_directive: str
++    opening_expression: str
++    opening_status: str
++    current_guard: ConditionalGuard | None
++    had_conditional_branch: bool = False
++
++
++def is_always_true_if_expression(expression: str) -> bool:
++    """Return True for the tiny, safe subset of #if expressions we can prove active."""
++    normalized = expression.strip()
++    while normalized.startswith("(") and normalized.endswith(")"):
++        inner = normalized[1:-1].strip()
++        if not inner:
++            break
++        normalized = inner
++    return normalized == "1"
++
++
++def conditional_guard_stacks_by_line(text: str) -> dict[int, list[ConditionalGuard]]:
++    """Return unresolved preprocessor guards that affect each source line.
++
++    This intentionally does not try to evaluate project macros yet.  It marks
++    only branches whose activity depends on an unresolved preprocessor
++    condition, while leaving the deterministic `#if 0` inactive case to
++    inactive_regions.py.
++    """
++    guards_by_line: dict[int, list[ConditionalGuard]] = {}
++    stack: list[_Frame] = []
++
++    for lineno, line in enumerate(text.splitlines(), start=1):
++        m_if = _IF_RE.match(line)
++        if m_if:
++            directive = m_if.group("directive")
++            expression = m_if.group("expr").strip()
++            status = _opening_status(directive, expression)
++            guard = None
++            had_conditional = False
++            if status == "conditional":
++                guard = ConditionalGuard(directive=directive, expression=expression, line=lineno)
++                had_conditional = True
++            stack.append(
++                _Frame(
++                    opening_directive=directive,
++                    opening_expression=expression,
++                    opening_status=status,
++                    current_guard=guard,
++                    had_conditional_branch=had_conditional,
++                )
++            )
++            continue
++
++        m_elif = _ELIF_RE.match(line)
++        if m_elif:
++            if stack:
++                expression = m_elif.group("expr").strip()
++                frame = stack[-1]
++                frame.current_guard = _elif_guard(expression, lineno, frame)
++                if frame.current_guard is not None:
++                    frame.had_conditional_branch = True
++            continue
++
++        if _ELSE_RE.match(line):
++            if stack:
++                frame = stack[-1]
++                frame.current_guard = _else_guard(lineno, frame)
++                if frame.current_guard is not None:
++                    frame.had_conditional_branch = True
++            continue
++
++        if _ENDIF_RE.match(line):
++            if stack:
++                stack.pop()
++            continue
++
++        active_guards = [frame.current_guard for frame in stack if frame.current_guard is not None]
++        if active_guards:
++            guards_by_line[lineno] = list(active_guards)
++
++    return guards_by_line
++
++
++def _opening_status(directive: str, expression: str) -> str:
++    if directive == "if":
++        if is_always_false_if_expression(expression):
++            return "inactive"
++        if is_always_true_if_expression(expression):
++            return "active"
++    return "conditional"
++
++
++def _elif_guard(expression: str, lineno: int, frame: _Frame) -> ConditionalGuard | None:
++    if frame.opening_status == "active" and not frame.had_conditional_branch:
++        # `#if 1` already selected the first branch; later branches are outside
++        # this MVP's inactive marking and should not be reported as conditional.
++        return None
++    if is_always_false_if_expression(expression):
++        return None
++    if is_always_true_if_expression(expression) and not frame.had_conditional_branch:
++        return None
++    return ConditionalGuard(directive="elif", expression=expression, line=lineno)
++
++
++def _else_guard(lineno: int, frame: _Frame) -> ConditionalGuard | None:
++    if frame.opening_status == "inactive" and not frame.had_conditional_branch:
++        # Else branch of `#if 0` is known active.
++        return None
++    if frame.opening_status == "active" and not frame.had_conditional_branch:
++        return None
++    expression = f"else of {frame.opening_expression}"
++    return ConditionalGuard(directive="else", expression=expression, line=lineno)
+diff -ruN '--exclude=__pycache__' '--exclude=.pytest_cache' '--exclude=.repoanalyzer-index' repoanalyzer_prev_if0/repoanalyzer/cpp/ingest.py repoanalyzer_work_if0/repoanalyzer/cpp/ingest.py
+--- repoanalyzer_prev_if0/repoanalyzer/cpp/ingest.py	2026-06-21 04:08:32.000000000 +0000
++++ repoanalyzer_work_if0/repoanalyzer/cpp/ingest.py	2026-06-21 04:13:23.534354167 +0000
+@@ -11,6 +11,7 @@
+ 
+ from .build_context import load_build_context
+ from .build_guards import extract_build_guards
++from .conditional_regions import ConditionalGuard, conditional_guard_stacks_by_line
+ from .calls import extract_calls
+ from .includes import extract_includes
+ from .inactive_regions import inactive_if0_regions, inactive_line_numbers
+@@ -43,12 +44,13 @@
+         store.upsert_file(source_file.path, text, language="cpp")
+         inactive_lines = inactive_line_numbers(text)
+         inactive_regions = inactive_if0_regions(text)
++        conditional_guards = conditional_guard_stacks_by_line(text)
+         facts: list[CodeFact] = []
+         facts.extend(extract_includes(source_file.path, text))
+         facts.extend(extract_build_guards(source_file.path, text))
+-        facts.extend(_mark_inactive_facts(extract_symbols(source_file.path, text), inactive_lines, inactive_regions))
+-        facts.extend(_mark_inactive_facts(extract_references(source_file.path, text), inactive_lines, inactive_regions))
+-        facts.extend(_mark_inactive_facts(extract_calls(source_file.path, text), inactive_lines, inactive_regions))
++        facts.extend(_mark_build_status(extract_symbols(source_file.path, text), inactive_lines, inactive_regions, conditional_guards))
++        facts.extend(_mark_build_status(extract_references(source_file.path, text), inactive_lines, inactive_regions, conditional_guards))
++        facts.extend(_mark_build_status(extract_calls(source_file.path, text), inactive_lines, inactive_regions, conditional_guards))
+         store.insert_facts(facts)
+         total_facts += len(facts)
+     return IngestResult(str(root), str(index_db_path(root)), len(files), total_facts)
+@@ -72,8 +74,13 @@
+     ]
+ 
+ 
+-def _mark_inactive_facts(facts: list[CodeFact], inactive_lines: set[int], inactive_regions) -> list[CodeFact]:
+-    if not inactive_lines:
++def _mark_build_status(
++    facts: list[CodeFact],
++    inactive_lines: set[int],
++    inactive_regions,
++    conditional_guards: dict[int, list[ConditionalGuard]],
++) -> list[CodeFact]:
++    if not inactive_lines and not conditional_guards:
+         return facts
+     marked: list[CodeFact] = []
+     for fact in facts:
+@@ -88,6 +95,22 @@
+                 }
+             )
+             marked.append(replace(fact, confidence="low", payload=payload))
++            continue
++
++        guards = _fact_conditional_guards(fact, conditional_guards)
++        if guards:
++            payload = dict(fact.payload)
++            payload.update(
++                {
++                    "build_status": "conditional",
++                    "conditional_reason": "unresolved_preprocessor_guard",
++                    "guard_expressions": [guard.expression for guard in guards],
++                    "guard_directives": [guard.directive for guard in guards],
++                    "guard_lines": [guard.line for guard in guards],
++                    "guard_stack": [guard.to_dict() for guard in guards],
++                }
++            )
++            marked.append(replace(fact, confidence="medium", payload=payload))
+         else:
+             marked.append(fact)
+     return marked
+@@ -104,3 +127,16 @@
+         if region.start_line <= line <= region.end_line:
+             return region
+     return None
++
++
++def _fact_conditional_guards(fact: CodeFact, conditional_guards: dict[int, list[ConditionalGuard]]) -> list[ConditionalGuard]:
++    lines = [fact.start_line] if fact.fact_type == "symbol" else range(fact.start_line, fact.end_line + 1)
++    guards: list[ConditionalGuard] = []
++    seen: set[tuple[str, str, int]] = set()
++    for line in lines:
++        for guard in conditional_guards.get(line, []):
++            key = (guard.directive, guard.expression, guard.line)
++            if key not in seen:
++                guards.append(guard)
++                seen.add(key)
++    return guards
+diff -ruN '--exclude=__pycache__' '--exclude=.pytest_cache' '--exclude=.repoanalyzer-index' repoanalyzer_prev_if0/tests/fixtures_cpp/conditional_guard/cases.yaml repoanalyzer_work_if0/tests/fixtures_cpp/conditional_guard/cases.yaml
+--- repoanalyzer_prev_if0/tests/fixtures_cpp/conditional_guard/cases.yaml	1970-01-01 00:00:00.000000000 +0000
++++ repoanalyzer_work_if0/tests/fixtures_cpp/conditional_guard/cases.yaml	2026-06-21 04:13:46.239378961 +0000
+@@ -0,0 +1,35 @@
++cases:
++  - id: cpp_conditional_guard_001
++    question: "init_device はどこから呼ばれる？"
++    mode: callers
++    expected:
++      must_include:
++        - fact_type: call
++          caller: start_device
++          callee: init_device
++          path: src/device.cpp
++        - fact_type: call
++          caller: feature_entry
++          callee: init_device
++          path: src/device.cpp
++          build_status: conditional
++        - fact_type: call
++          caller: default_helper
++          callee: init_device
++          path: src/device.cpp
++          build_status: conditional
++        - fact_type: call
++          caller: alt_entry
++          callee: init_device
++          path: src/device.cpp
++          build_status: conditional
++        - fact_type: call
++          caller: fallback_entry
++          callee: init_device
++          path: src/device.cpp
++      must_not_include:
++        - fact_type: call
++          caller: ghost_entry
++          callee: init_device
++    answerability: answerable
++    required_unknowns: []
+diff -ruN '--exclude=__pycache__' '--exclude=.pytest_cache' '--exclude=.repoanalyzer-index' repoanalyzer_prev_if0/tests/fixtures_cpp/conditional_guard/compile_commands.json repoanalyzer_work_if0/tests/fixtures_cpp/conditional_guard/compile_commands.json
+--- repoanalyzer_prev_if0/tests/fixtures_cpp/conditional_guard/compile_commands.json	1970-01-01 00:00:00.000000000 +0000
++++ repoanalyzer_work_if0/tests/fixtures_cpp/conditional_guard/compile_commands.json	2026-06-21 04:13:46.194576953 +0000
+@@ -0,0 +1,12 @@
++[
++  {
++    "directory": ".",
++    "command": "c++ -Iinclude -c src/main.cpp",
++    "file": "src/main.cpp"
++  },
++  {
++    "directory": ".",
++    "command": "c++ -Iinclude -c src/device.cpp",
++    "file": "src/device.cpp"
++  }
++]
+diff -ruN '--exclude=__pycache__' '--exclude=.pytest_cache' '--exclude=.repoanalyzer-index' repoanalyzer_prev_if0/tests/fixtures_cpp/conditional_guard/include/device.h repoanalyzer_work_if0/tests/fixtures_cpp/conditional_guard/include/device.h
+--- repoanalyzer_prev_if0/tests/fixtures_cpp/conditional_guard/include/device.h	1970-01-01 00:00:00.000000000 +0000
++++ repoanalyzer_work_if0/tests/fixtures_cpp/conditional_guard/include/device.h	2026-06-21 04:13:46.205572018 +0000
+@@ -0,0 +1,4 @@
++#pragma once
++
++void init_device();
++void start_device();
+diff -ruN '--exclude=__pycache__' '--exclude=.pytest_cache' '--exclude=.repoanalyzer-index' repoanalyzer_prev_if0/tests/fixtures_cpp/conditional_guard/src/device.cpp repoanalyzer_work_if0/tests/fixtures_cpp/conditional_guard/src/device.cpp
+--- repoanalyzer_prev_if0/tests/fixtures_cpp/conditional_guard/src/device.cpp	1970-01-01 00:00:00.000000000 +0000
++++ repoanalyzer_work_if0/tests/fixtures_cpp/conditional_guard/src/device.cpp	2026-06-21 04:13:46.228384158 +0000
+@@ -0,0 +1,36 @@
++#include "device.h"
++
++void init_device() {
++}
++
++void start_device() {
++    init_device();
++}
++
++#ifdef FEATURE_EXTRA
++void feature_entry() {
++    init_device();
++}
++#endif
++
++#ifndef DISABLE_DEFAULT_HELPER
++void default_helper() {
++    init_device();
++}
++#endif
++
++#if FEATURE_ALT
++void alt_entry() {
++    init_device();
++}
++#endif
++
++#if 0
++void ghost_entry() {
++    init_device();
++}
++#else
++void fallback_entry() {
++    init_device();
++}
++#endif
+diff -ruN '--exclude=__pycache__' '--exclude=.pytest_cache' '--exclude=.repoanalyzer-index' repoanalyzer_prev_if0/tests/fixtures_cpp/conditional_guard/src/main.cpp repoanalyzer_work_if0/tests/fixtures_cpp/conditional_guard/src/main.cpp
+--- repoanalyzer_prev_if0/tests/fixtures_cpp/conditional_guard/src/main.cpp	1970-01-01 00:00:00.000000000 +0000
++++ repoanalyzer_work_if0/tests/fixtures_cpp/conditional_guard/src/main.cpp	2026-06-21 04:13:46.217052964 +0000
+@@ -0,0 +1,6 @@
++#include "device.h"
++
++int main() {
++    start_device();
++    return 0;
++}
+diff -ruN '--exclude=__pycache__' '--exclude=.pytest_cache' '--exclude=.repoanalyzer-index' repoanalyzer_prev_if0/tests/test_cpp_basic_call.py repoanalyzer_work_if0/tests/test_cpp_basic_call.py
+--- repoanalyzer_prev_if0/tests/test_cpp_basic_call.py	2026-06-21 04:08:32.000000000 +0000
++++ repoanalyzer_work_if0/tests/test_cpp_basic_call.py	2026-06-21 04:13:56.591991831 +0000
+@@ -13,6 +13,7 @@
+ FIXTURE = Path(__file__).parent / "fixtures_cpp" / "basic_call"
+ GATING_FIXTURE = Path(__file__).parent / "fixtures_cpp" / "compile_commands_gating"
+ INACTIVE_IF0_FIXTURE = Path(__file__).parent / "fixtures_cpp" / "inactive_if0"
++CONDITIONAL_GUARD_FIXTURE = Path(__file__).parent / "fixtures_cpp" / "conditional_guard"
+ 
+ 
+ def test_ingest_and_find_basic_call_facts() -> None:
+@@ -94,3 +95,45 @@
+     ingest_repo(INACTIVE_IF0_FIXTURE, reset=True)
+     result = run_eval(INACTIVE_IF0_FIXTURE, INACTIVE_IF0_FIXTURE / "cases.yaml")
+     assert result.failed == 0, result.to_dict()
++
++
++def test_unresolved_build_guards_mark_facts_as_conditional_but_keep_them_queryable() -> None:
++    result = ingest_repo(CONDITIONAL_GUARD_FIXTURE, reset=True)
++    assert result.files == 3
++
++    callers = find_callers(CONDITIONAL_GUARD_FIXTURE, "init_device")
++    caller_names = [fact.caller for fact in callers]
++    assert caller_names == [
++        "start_device",
++        "feature_entry",
++        "default_helper",
++        "alt_entry",
++        "fallback_entry",
++    ]
++
++    conditional_by_caller = {fact.caller: fact for fact in callers if fact.payload.get("build_status") == "conditional"}
++    assert set(conditional_by_caller) == {"feature_entry", "default_helper", "alt_entry"}
++    assert conditional_by_caller["feature_entry"].payload["guard_expressions"] == ["FEATURE_EXTRA"]
++    assert conditional_by_caller["feature_entry"].payload["guard_directives"] == ["ifdef"]
++    assert conditional_by_caller["default_helper"].payload["guard_expressions"] == ["DISABLE_DEFAULT_HELPER"]
++    assert conditional_by_caller["default_helper"].payload["guard_directives"] == ["ifndef"]
++    assert conditional_by_caller["alt_entry"].payload["guard_expressions"] == ["FEATURE_ALT"]
++    assert conditional_by_caller["alt_entry"].payload["guard_directives"] == ["if"]
++
++    assert find_definitions(CONDITIONAL_GUARD_FIXTURE, "ghost_entry") == []
++    fallback_defs = find_definitions(CONDITIONAL_GUARD_FIXTURE, "fallback_entry")
++    assert len(fallback_defs) == 1
++    assert "build_status" not in fallback_defs[0].payload
++
++    stored_facts = SQLiteStore(index_db_path(CONDITIONAL_GUARD_FIXTURE)).all_facts()
++    guards = [fact for fact in stored_facts if fact.fact_type == "build_guard"]
++    assert any(fact.payload.get("expression") == "FEATURE_EXTRA" and fact.payload.get("status") == "conditional" for fact in guards)
++    assert any(fact.payload.get("expression") == "DISABLE_DEFAULT_HELPER" and fact.payload.get("status") == "conditional" for fact in guards)
++    assert any(fact.payload.get("expression") == "FEATURE_ALT" and fact.payload.get("status") == "conditional" for fact in guards)
++    assert any(fact.payload.get("expression") == "0" and fact.payload.get("status") == "inactive" for fact in guards)
++
++
++def test_evidence_eval_conditional_guard_cases_pass() -> None:
++    ingest_repo(CONDITIONAL_GUARD_FIXTURE, reset=True)
++    result = run_eval(CONDITIONAL_GUARD_FIXTURE, CONDITIONAL_GUARD_FIXTURE / "cases.yaml")
++    assert result.failed == 0, result.to_dict()

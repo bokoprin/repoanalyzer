@@ -1,0 +1,36 @@
+cpp:
+  target_profile:
+    name: tinyusb-typec-pd-stm32f407disco-none
+    compile_commands: compile_commands.json
+    board: stm32f407disco
+    rtos: none
+    usb_role: typec_pd
+    example: examples/typec/power_delivery
+    mcu: OPT_MCU_STM32F4
+    speed: full-speed
+    include_dirs:
+      - .
+      - src
+      - src/common
+      - src/typec
+      - src/osal
+      - examples/typec/power_delivery/src
+      - hw
+    macros:
+      - CFG_TUSB_MCU=OPT_MCU_STM32F4
+      - CFG_TUSB_OS=OPT_OS_NONE
+      - CFG_TUC_ENABLED=1
+      - TUP_TYPEC_RHPORTS_NUM=1
+      - BOARD_STM32F407DISCO=1
+    config_headers:
+      - examples/typec/power_delivery/src/tusb_config.h
+    active_path_prefixes:
+      - src
+      - examples/typec/power_delivery/src
+      - hw/bsp
+    inactive_path_prefixes:
+      - examples/device
+      - examples/host
+      - examples/dual
+      - test
+    active_port: src/portable/synopsys/dwc2

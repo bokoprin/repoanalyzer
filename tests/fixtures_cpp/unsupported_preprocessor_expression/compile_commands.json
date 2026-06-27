@@ -1,0 +1,12 @@
+[
+  {
+    "directory": ".",
+    "command": "g++ -Isrc -c src/main.cpp",
+    "file": "src/main.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "g++ -Isrc -c src/device.cpp",
+    "file": "src/device.cpp"
+  }
+]

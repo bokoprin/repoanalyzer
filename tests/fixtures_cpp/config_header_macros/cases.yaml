@@ -1,0 +1,52 @@
+cases:
+  - id: cpp_config_header_macros_001
+    question: "init_device はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: start_device
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: forced_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: forced_disabled_fallback
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: direct_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: zero_header_fallback
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: disabled_header_define_entry
+          callee: init_device
+          path: src/device.cpp
+          build_status: conditional
+        - fact_type: call
+          caller: unresolved_config_entry
+          callee: init_device
+          path: src/device.cpp
+          build_status: conditional
+      must_not_include:
+        - fact_type: call
+          caller: forced_fallback
+          callee: init_device
+        - fact_type: call
+          caller: enabled_when_not_disabled
+          callee: init_device
+        - fact_type: call
+          caller: direct_fallback
+          callee: init_device
+        - fact_type: call
+          caller: zero_header_entry
+          callee: init_device
+    answerability: partial
+    required_unknowns:
+      - conditional_build_evidence

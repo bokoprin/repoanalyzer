@@ -1,0 +1,47 @@
+cases:
+  - id: cpp_macro_guard_eval_001
+    question: "init_device はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: start_device
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: feature_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: disabled_default_fallback
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: alt_entry
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: zero_fallback
+          callee: init_device
+          path: src/device.cpp
+        - fact_type: call
+          caller: unresolved_entry
+          callee: init_device
+          path: src/device.cpp
+          build_status: conditional
+      must_not_include:
+        - fact_type: call
+          caller: feature_fallback
+          callee: init_device
+        - fact_type: call
+          caller: default_helper
+          callee: init_device
+        - fact_type: call
+          caller: alt_fallback
+          callee: init_device
+        - fact_type: call
+          caller: zero_entry
+          callee: init_device
+    answerability: partial
+    required_unknowns:
+      - conditional_build_evidence

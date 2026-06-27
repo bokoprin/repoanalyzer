@@ -1,0 +1,61 @@
+cases:
+  - id: file_open_encoding_trace
+    question: "ファイル読み込み・文字コード判定はどう行われる？"
+    expected:
+      must_include:
+        - fact_type: relation
+          subject: sakura::CFileLoad::FileOpen
+          predicate: opens_file
+          object: sakura::CreateFile
+        - fact_type: relation
+          subject: sakura::CFileLoad::FileOpen
+          predicate: detects_character_encoding
+          object: sakura::CCodeMediator::CheckKanjiCode
+        - fact_type: relation
+          subject: sakura::CFileLoad::FileOpen
+          predicate: creates_encoding_converter
+          object: sakura::CCodeFactory::CreateCodeBase
+        - fact_type: call_path
+          subject: sakura::CFileLoad::FileOpen
+          payload_contains:
+            route_kind: file_open_encoding_trace
+    answerability: answerable
+    required_unknowns: []
+
+  - id: line_read_conversion_trace
+    question: "ファイル読み込み・文字コード判定はどう行われる？"
+    expected:
+      must_include:
+        - fact_type: relation
+          subject: sakura::CFileLoad::ReadLine_core
+          predicate: scans_line_boundary
+          object: sakura::CFileLoad::GetNextLineCharCode
+        - fact_type: relation
+          subject: sakura::CFileLoad::ReadLine_core
+          predicate: converts_file_to_internal_encoding
+          object: sakura::CIoBridge::FileToImpl
+        - fact_type: call_path
+          subject: sakura::CFileLoad::ReadLine_core
+          payload_contains:
+            route_kind: line_read_conversion_trace
+    answerability: answerable
+    required_unknowns: []
+
+  - id: encoding_detector_trace
+    question: "ファイル読み込み・文字コード判定はどう行われる？"
+    expected:
+      must_include:
+        - fact_type: relation
+          subject: sakura::CCodeMediator::CheckKanjiCode
+          predicate: uses_encoding_detector
+          object: sakura::CharsetDetector::Detect
+        - fact_type: relation
+          subject: sakura::CCodeMediator::CheckKanjiCode
+          predicate: detects_character_encoding
+          object: sakura::CESI::CheckKanjiCode
+        - fact_type: call_path
+          subject: sakura::CCodeMediator::CheckKanjiCode
+          payload_contains:
+            route_kind: encoding_detector_trace
+    answerability: answerable
+    required_unknowns: []

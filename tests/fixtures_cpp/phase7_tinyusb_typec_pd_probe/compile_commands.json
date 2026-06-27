@@ -1,0 +1,5 @@
+[
+  {"directory":".","command":"gcc -I. -Isrc -Isrc/common -Isrc/typec -Isrc/osal -Iexamples/typec/power_delivery/src -Ihw -DCFG_TUSB_MCU=OPT_MCU_STM32F4 -DCFG_TUSB_OS=OPT_OS_NONE -DCFG_TUC_ENABLED=1 -DTUP_TYPEC_RHPORTS_NUM=1 -DBOARD_STM32F407DISCO=1 -c examples/typec/power_delivery/src/main.c","file":"examples/typec/power_delivery/src/main.c"},
+  {"directory":".","command":"gcc -I. -Isrc -Isrc/common -Isrc/typec -Isrc/osal -Iexamples/typec/power_delivery/src -Ihw -DCFG_TUSB_MCU=OPT_MCU_STM32F4 -DCFG_TUSB_OS=OPT_OS_NONE -DCFG_TUC_ENABLED=1 -DTUP_TYPEC_RHPORTS_NUM=1 -DBOARD_STM32F407DISCO=1 -c src/typec/usbc.c","file":"src/typec/usbc.c"},
+  {"directory":".","command":"gcc -I. -Isrc -Isrc/common -Isrc/typec -Isrc/osal -Iexamples/typec/power_delivery/src -Ihw -DCFG_TUSB_MCU=OPT_MCU_STM32F4 -DCFG_TUSB_OS=OPT_OS_NONE -DCFG_TUC_ENABLED=1 -DTUP_TYPEC_RHPORTS_NUM=1 -DBOARD_STM32F407DISCO=1 -c src/portable/synopsys/dwc2/tcd_dwc2.c","file":"src/portable/synopsys/dwc2/tcd_dwc2.c"}
+]

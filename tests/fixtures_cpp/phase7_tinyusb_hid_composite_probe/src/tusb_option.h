@@ -1,0 +1,8 @@
+#ifndef TUSB_OPTION_H_
+#define TUSB_OPTION_H_
+#define OPT_OS_NONE 1
+#define OPT_MODE_FULL_SPEED 1
+#define OPT_MCU_STM32F4 1200
+#define TUSB_ROLE_DEVICE 1
+#define TUSB_SPEED_AUTO 0
+#endif

@@ -1,0 +1,336 @@
+id: phase7_tinyusb_host_cdc_msc_hid_semantics_probe
+description: TinyUSB host cdc_msc_hid target-profile, enumeration, class-driver dispatch, HCD, and event queue probe.
+ingest:
+  enabled: true
+  config: repoanalyzer.yml
+budgets:
+  max_total_ms: 20000
+  max_facts: 1500
+  max_indexed_files: 24
+expect:
+  ingest:
+    status: indexed
+    min_files: 8
+    min_facts: 80
+  repo_status:
+    clean: true
+  diagnostics:
+    min_total_facts: 80
+    min_indexed_files: 8
+    max_warnings: 0
+scenarios:
+  - id: tinyusb_host_target_profile_role
+    kind: verify_claim
+    claim:
+      claim_type: target_profile
+      subject: usb_role
+      object: host
+    expect:
+      verdict: supported
+      reason_code: target_profile_supported
+      supporting_must_include:
+        - fact_type: target_profile
+          predicate: target_attribute
+          subject: usb_role
+          object: host
+
+  - id: tinyusb_host_build_config_hid_enabled
+    kind: verify_claim
+    claim:
+      claim_type: build_config
+      subject: CFG_TUH_HID
+      object: "1"
+    expect:
+      verdict: supported
+      reason_code: build_config_macro_value_supported
+      supporting_must_include:
+        - fact_type: build_config
+          predicate: macro_value
+          subject: CFG_TUH_HID
+          object: "1"
+
+  - id: tinyusb_host_main_calls_tusb_init
+    kind: verify_text
+    text: main calls tusb_init
+    expect:
+      overall_verdict: supported
+      verdicts_include:
+        - claim_type: calls
+          subject: main
+          object: tusb_init
+          verdict: supported
+
+  - id: tinyusb_host_tusb_init_calls_tuh_init
+    kind: verify_text
+    text: tusb_init calls tuh_init
+    expect:
+      overall_verdict: supported
+      verdicts_include:
+        - claim_type: calls
+          subject: tusb_init
+          object: tuh_init
+          verdict: supported
+
+  - id: tinyusb_host_cdc_class_driver_entry
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_host_runtime_semantic
+      subject: CDC
+      object: usbh_class_drivers
+      payload:
+        predicate: declares_host_class_driver_entry
+        config_macro: CFG_TUH_CDC
+    expect:
+      verdict: supported
+      reason_code: tinyusb_host_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_host_runtime
+          predicate: declares_host_class_driver_entry
+          subject: CDC
+          object: usbh_class_drivers
+          payload_contains:
+            driver_table: usbh_class_drivers
+            usb_role: host
+            config_macro: CFG_TUH_CDC
+
+  - id: tinyusb_host_hid_open_callback_binding
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_host_runtime_semantic
+      subject: HID
+      object: hidh_open
+      payload:
+        predicate: binds_host_driver_callback
+        callback_field: open
+    expect:
+      verdict: supported
+      reason_code: tinyusb_host_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_host_runtime
+          predicate: binds_host_driver_callback
+          subject: HID
+          object: hidh_open
+          payload_contains:
+            callback_field: open
+            callback_symbol: hidh_open
+            usb_role: host
+
+  - id: tinyusb_host_endpoint_map_declared
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_host_runtime_semantic
+      subject: ep2drv
+      payload:
+        predicate: declares_host_endpoint_driver_map
+        map_kind: endpoint_to_driver_map
+    expect:
+      verdict: supported
+      reason_code: tinyusb_host_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_host_runtime
+          predicate: declares_host_endpoint_driver_map
+          subject: ep2drv
+          object: endpoint_to_driver_map
+
+  - id: tinyusb_host_descriptor_parse_binds_maps
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_host_runtime_semantic
+      subject: drv_id
+      object: tu_bind_driver_to_ep_itf
+      payload:
+        predicate: binds_host_driver_to_endpoint_interface_maps
+        map_name: ep2drv
+    expect:
+      verdict: supported
+      reason_code: tinyusb_host_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_host_runtime
+          predicate: binds_host_driver_to_endpoint_interface_maps
+          subject: drv_id
+          object: tu_bind_driver_to_ep_itf
+          payload_contains:
+            endpoint_map: dev->ep2drv
+            interface_map: dev->itf2drv
+            descriptor_context: host_configuration_descriptor_parse
+
+  - id: tinyusb_host_hcd_event_handler_defers_to_queue
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_host_runtime_semantic
+      subject: hcd_event_handler
+      object: osal_queue_send
+      payload:
+        predicate: defers_hcd_event_to_host_queue
+        queue_api: osal_queue_send
+        queues_event: true
+    expect:
+      verdict: supported
+      reason_code: tinyusb_host_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_host_runtime
+          predicate: defers_hcd_event_to_host_queue
+          subject: hcd_event_handler
+          object: osal_queue_send
+          payload_contains:
+            defer_model: hcd_event_handler_enqueues_for_tuh_task
+            queues_event: true
+            isr_safe_arg_detected: true
+
+  - id: tinyusb_host_tuh_task_consumes_queue_and_dispatches_attach
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_host_runtime_semantic
+      subject: tuh_task_ext
+      object: osal_queue_receive
+      payload:
+        predicate: consumes_hcd_event_queue
+        queue_api: osal_queue_receive
+        consumes_event_queue: true
+        handles_device_attach: true
+        dispatches_enumeration: true
+    expect:
+      verdict: supported
+      reason_code: tinyusb_host_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_host_runtime
+          predicate: consumes_hcd_event_queue
+          subject: tuh_task_ext
+          object: osal_queue_receive
+          payload_contains:
+            handles_device_attach: true
+            dispatches_enumeration: true
+
+  - id: tinyusb_host_xfer_complete_indirect_dispatch
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_host_runtime_semantic
+      subject: tuh_task_ext
+      object: xfer_cb
+      payload:
+        predicate: host_indirect_dispatches_to_driver_callback
+        map_name: ep2drv
+        via_function: get_driver
+        dispatches_class_xfer_callback: true
+    expect:
+      verdict: supported
+      reason_code: tinyusb_host_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_host_runtime
+          predicate: host_indirect_dispatches_to_driver_callback
+          subject: tuh_task_ext
+          object: xfer_cb
+          payload_contains:
+            callback_field: xfer_cb
+            uses_endpoint_map: true
+            event_id: HCD_EVENT_XFER_COMPLETE
+
+  - id: tinyusb_host_enum_get_device_descriptor_stage
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_host_runtime_semantic
+      subject: tuh_descriptor_get_device
+      object: get_device_descriptor
+      payload:
+        predicate: host_enumeration_stage
+        enumeration_stage: get_device_descriptor
+    expect:
+      verdict: supported
+      reason_code: tinyusb_host_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_host_runtime
+          predicate: host_enumeration_stage
+          subject: tuh_descriptor_get_device
+          object: get_device_descriptor
+
+  - id: tinyusb_host_enum_set_address_stage
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_host_runtime_semantic
+      subject: tuh_address_set
+      object: set_address
+      payload:
+        predicate: host_enumeration_stage
+        enumeration_stage: set_address
+    expect:
+      verdict: supported
+      reason_code: tinyusb_host_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_host_runtime
+          predicate: host_enumeration_stage
+          subject: tuh_address_set
+          object: set_address
+
+  - id: tinyusb_host_enum_mount_callback_stage
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_host_runtime_semantic
+      subject: tuh_mount_cb
+      object: mount_callback
+      payload:
+        predicate: host_enumeration_stage
+        enumeration_stage: mount_callback
+    expect:
+      verdict: supported
+      reason_code: tinyusb_host_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_host_runtime
+          predicate: host_enumeration_stage
+          subject: tuh_mount_cb
+          object: mount_callback
+
+  - id: tinyusb_host_hcd_edpt_xfer_boundary
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_host_runtime_semantic
+      subject: hcd_edpt_xfer
+      object: host_controller_boundary
+      payload:
+        predicate: hcd_transfer_submit_boundary
+        controller_port_path: src/portable/synopsys/dwc2
+        hardware_boundary: true
+    expect:
+      verdict: supported
+      reason_code: tinyusb_host_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_host_runtime
+          predicate: hcd_transfer_submit_boundary
+          subject: hcd_edpt_xfer
+          object: host_controller_boundary
+          payload_contains:
+            hardware_boundary: true
+            controller_port_path: src/portable/synopsys/dwc2
+            unknown_type: host_controller_register_semantics_unknown
+
+  - id: tinyusb_host_tuh_edpt_xfer_async_submit
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_host_runtime_semantic
+      subject: tuh_edpt_xfer
+      object: async_host_transfer_request
+      payload:
+        predicate: host_endpoint_transfer_submit
+        hcd_api: hcd_edpt_xfer
+        transfer_lifecycle_stage: submit
+    expect:
+      verdict: supported
+      reason_code: tinyusb_host_runtime_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_host_runtime
+          predicate: host_endpoint_transfer_submit
+          subject: tuh_edpt_xfer
+          object: async_host_transfer_request
+          payload_contains:
+            hcd_transfer_api: hcd_edpt_xfer
+            runtime_model: host_endpoint_async_transfer
+
+  - id: tinyusb_host_diagnostics_smoke
+    kind: query_diagnostics
+    expect:
+      min_total_facts: 80
+      max_warnings: 0
+
+  - id: tinyusb_host_status_smoke
+    kind: repo_status
+    expect:
+      clean: true

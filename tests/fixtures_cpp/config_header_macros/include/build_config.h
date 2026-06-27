@@ -1,0 +1,14 @@
+#ifndef BUILD_CONFIG_H
+#define BUILD_CONFIG_H
+
+#define FEATURE_FORCED 1
+#define DISABLE_FROM_FORCED 1
+#define FEATURE_ZERO_FROM_HEADER 0
+#define FEATURE_EXPR_FROM_HEADER 1
+#define FUNCTION_LIKE_MACRO(x) x
+
+#if 0
+#define DISABLED_HEADER_DEFINE 1
+#endif
+
+#endif

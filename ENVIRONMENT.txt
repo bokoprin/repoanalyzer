@@ -1,0 +1,10 @@
+﻿CreatedAt: 2026-06-21T12:41:55.5691620+09:00
+RepoRoot: C:\shinsuke\app\repoanalyzer
+BatPath: C:\shinsuke\app\repoanalyzer\tool\export_chatgpt_context.bat
+OutputZip: C:\shinsuke\app\repoanalyzer\export\repoanalyzer-chatgpt-context-20260621-124154.zip
+
+[Tools]
+PowerShell: 5.1.26100.8655
+Python: Python 3.14.2
+Pytest: pytest 9.0.2
+Git: git version 2.52.0.windows.1

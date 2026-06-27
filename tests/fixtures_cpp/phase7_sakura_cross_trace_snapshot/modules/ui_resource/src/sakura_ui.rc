@@ -1,0 +1,16 @@
+#include "Funccode_define.h"
+
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Search"
+    BEGIN
+        MENUITEM "Find &Next", F_SEARCH_NEXT
+        MENUITEM "Find &Previous", F_SEARCH_PREV
+    END
+END
+
+IDR_ACCELERATOR ACCELERATORS
+BEGIN
+    VK_F3, F_SEARCH_NEXT, VIRTKEY, NOINVERT
+    "G", F_GREP, VIRTKEY, CONTROL
+END

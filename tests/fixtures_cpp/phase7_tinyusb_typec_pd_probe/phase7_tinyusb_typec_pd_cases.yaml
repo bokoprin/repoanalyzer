@@ -1,0 +1,292 @@
+id: phase7_tinyusb_typec_pd_semantics_probe
+description: TinyUSB Type-C / USB-PD stack compact probe.
+ingest:
+  enabled: true
+  config: repoanalyzer.yml
+budgets:
+  max_total_ms: 20000
+  max_facts: 1500
+  max_indexed_files: 24
+expect:
+  ingest:
+    status: indexed
+    min_files: 6
+    min_facts: 80
+  repo_status:
+    clean: true
+  diagnostics:
+    min_total_facts: 80
+    min_indexed_files: 6
+    max_warnings: 0
+scenarios:
+  - id: typec_target_profile_role
+    kind: verify_claim
+    claim:
+      claim_type: target_profile
+      subject: usb_role
+      object: typec_pd
+    expect:
+      verdict: supported
+      reason_code: target_profile_supported
+      supporting_must_include:
+        - fact_type: target_profile
+          predicate: target_attribute
+          subject: usb_role
+          object: typec_pd
+
+  - id: typec_build_config_enabled
+    kind: verify_claim
+    claim:
+      claim_type: build_config
+      subject: CFG_TUC_ENABLED
+      object: "1"
+    expect:
+      verdict: supported
+      reason_code: build_config_macro_value_supported
+      supporting_must_include:
+        - fact_type: build_config
+          predicate: macro_value
+          subject: CFG_TUC_ENABLED
+          object: "1"
+
+  - id: typec_main_calls_tuc_init
+    kind: verify_claim
+    claim:
+      claim_type: calls
+      subject: main
+      object: tuc_init
+    expect:
+      verdict: supported
+      reason_code: call_edge_supported
+
+  - id: typec_tuc_init_initializes_tcd_boundary
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_typec_pd_semantic
+      subject: tuc_init
+      object: tcd_init
+      payload:
+        predicate: typec_stack_init
+        tcd_api: tcd_init
+        uses_osal_queue: true
+    expect:
+      verdict: supported
+      reason_code: tinyusb_typec_pd_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_typec_pd
+          predicate: typec_stack_init
+          subject: tuc_init
+          payload_contains:
+            calls_tcd_init: true
+            uses_osal_queue: true
+            usb_role: typec_pd
+
+  - id: typec_tcd_init_boundary_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_typec_pd_semantic
+      subject: tcd_init
+      object: typec_controller_boundary
+      payload:
+        predicate: tcd_init_boundary
+        hardware_boundary: true
+    expect:
+      verdict: supported
+      reason_code: tinyusb_typec_pd_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_typec_pd
+          predicate: tcd_init_boundary
+          subject: tcd_init
+          object: typec_controller_boundary
+          payload_contains:
+            hardware_boundary: true
+            unknown_type: typec_controller_register_semantics_unknown
+
+  - id: typec_event_queue_declared
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_typec_pd_semantic
+      subject: _usbc_q
+      object: tcd_event_t
+      payload:
+        predicate: declares_typec_event_queue
+    expect:
+      verdict: supported
+      reason_code: tinyusb_typec_pd_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_typec_pd
+          predicate: declares_typec_event_queue
+          subject: _usbc_q
+          object: tcd_event_t
+          payload_contains:
+            event_source: tcd_event_handler
+            event_consumer: tuc_task_ext
+
+  - id: typec_tcd_event_handler_defers_to_queue
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_typec_pd_semantic
+      subject: tcd_event_handler
+      object: osal_queue_send
+      payload:
+        predicate: defers_tcd_event_to_typec_queue
+    expect:
+      verdict: supported
+      reason_code: tinyusb_typec_pd_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_typec_pd
+          predicate: defers_tcd_event_to_typec_queue
+          subject: tcd_event_handler
+          object: osal_queue_send
+          payload_contains:
+            defer_model: tcd_event_handler_enqueues_for_tuc_task
+            starts_receive_on_cc_attach: true
+
+  - id: typec_tuc_task_consumes_queue_and_dispatches_pd_parser
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_typec_pd_semantic
+      subject: tuc_task_ext
+      object: osal_queue_receive
+      payload:
+        predicate: consumes_typec_event_queue
+    expect:
+      verdict: supported
+      reason_code: tinyusb_typec_pd_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_typec_pd
+          predicate: consumes_typec_event_queue
+          subject: tuc_task_ext
+          object: osal_queue_receive
+          payload_contains:
+            handles_rx_complete: true
+            dispatches_pd_data_parser: true
+            dispatches_pd_control_parser: true
+
+  - id: typec_rx_complete_event_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_typec_pd_semantic
+      subject: TCD_EVENT_RX_COMPLETE
+      object: rx_complete
+      payload:
+        predicate: handles_typec_event
+        event_id: TCD_EVENT_RX_COMPLETE
+    expect:
+      verdict: supported
+      reason_code: tinyusb_typec_pd_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_typec_pd
+          predicate: handles_typec_event
+          subject: TCD_EVENT_RX_COMPLETE
+          object: rx_complete
+          payload_contains:
+            consumer_function: tuc_task_ext
+            event_id: TCD_EVENT_RX_COMPLETE
+
+  - id: typec_parse_data_dispatches_policy_callback
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_typec_pd_semantic
+      subject: parse_msg_data
+      object: tuc_pd_data_received_cb
+      payload:
+        predicate: dispatches_pd_data_message_callback
+        callback_name: tuc_pd_data_received_cb
+    expect:
+      verdict: supported
+      reason_code: tinyusb_typec_pd_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_typec_pd
+          predicate: dispatches_pd_data_message_callback
+          subject: parse_msg_data
+          object: tuc_pd_data_received_cb
+          payload_contains:
+            message_category: data_message
+
+  - id: typec_pd_request_header_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_typec_pd_semantic
+      subject: tuc_msg_request
+      object: PD_DATA_REQUEST
+      payload:
+        predicate: builds_pd_request_message
+        pd_message_type: PD_DATA_REQUEST
+        power_role: PD_POWER_ROLE_SINK
+        data_role: PD_DATA_ROLE_UFP
+    expect:
+      verdict: supported
+      reason_code: tinyusb_typec_pd_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_typec_pd
+          predicate: builds_pd_request_message
+          subject: tuc_msg_request
+          object: PD_DATA_REQUEST
+          payload_contains:
+            pd_message_type: PD_DATA_REQUEST
+            power_role: PD_POWER_ROLE_SINK
+            data_role: PD_DATA_ROLE_UFP
+
+  - id: typec_source_cap_policy_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_typec_pd_semantic
+      subject: tuc_pd_data_received_cb
+      object: PD_DATA_SOURCE_CAP
+      payload:
+        predicate: handles_pd_data_message
+        pd_message_type: PD_DATA_SOURCE_CAP
+        policy_action: select_pdo_and_send_request
+    expect:
+      verdict: supported
+      reason_code: tinyusb_typec_pd_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_typec_pd
+          predicate: handles_pd_data_message
+          subject: tuc_pd_data_received_cb
+          object: PD_DATA_SOURCE_CAP
+          payload_contains:
+            policy_action: select_pdo_and_send_request
+            builds_request: true
+
+  - id: typec_control_accept_policy_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_typec_pd_semantic
+      subject: tuc_pd_control_received_cb
+      object: PD_CTRL_ACCEPT
+      payload:
+        predicate: handles_pd_control_message
+        pd_message_type: PD_CTRL_ACCEPT
+        message_category: control
+    expect:
+      verdict: supported
+      reason_code: tinyusb_typec_pd_semantic_supported
+      supporting_must_include:
+        - fact_type: tinyusb_typec_pd
+          predicate: handles_pd_control_message
+          subject: tuc_pd_control_received_cb
+          object: PD_CTRL_ACCEPT
+          payload_contains:
+            policy_action: request_accepted
+
+  - id: typec_event_api_rx_complete_detected
+    kind: verify_claim
+    claim:
+      claim_type: tinyusb_typec_pd_semantic
+      subject: tcd_event_rx_complete
+      object: TCD_EVENT_RX_COMPLETE
+      payload:
+        predicate: declares_tcd_event_api
+        event_id: TCD_EVENT_RX_COMPLETE
+    expect:
+      verdict: conditional
+      reason_code: tinyusb_typec_pd_semantic_conditional
+      supporting_must_include:
+        - fact_type: tinyusb_typec_pd
+          predicate: declares_tcd_event_api
+          subject: tcd_event_rx_complete
+          object: TCD_EVENT_RX_COMPLETE
+          payload_contains:
+            calls_event_handler: true

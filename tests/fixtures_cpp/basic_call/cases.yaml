@@ -1,0 +1,27 @@
+cases:
+  - id: cpp_basic_call_001
+    question: "init_device はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: start_device
+          callee: init_device
+          path: src/device.cpp
+      must_not_include:
+        - fact_type: call
+          caller: main
+          callee: init_device
+    answerability: answerable
+    required_unknowns: []
+
+  - id: cpp_basic_call_002
+    question: "main から最終的に init_device へ到達する？"
+    mode: call_path
+    expected:
+      must_include:
+        - fact_type: call_path
+          route: [main, start_device, init_device]
+      must_not_include: []
+    answerability: answerable
+    required_unknowns: []

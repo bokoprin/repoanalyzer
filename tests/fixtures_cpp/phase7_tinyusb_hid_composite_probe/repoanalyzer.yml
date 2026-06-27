@@ -1,0 +1,37 @@
+cpp:
+  target_profile:
+    name: tinyusb-device-hid-composite-stm32f407disco-none
+    compile_commands: compile_commands.json
+    board: stm32f407disco
+    rtos: none
+    usb_role: device
+    example: examples/device/hid_composite
+    mcu: OPT_MCU_STM32F4
+    speed: full-speed
+    include_dirs:
+      - .
+      - src
+      - src/common
+      - src/device
+      - src/osal
+      - src/class/hid
+      - examples/device/hid_composite/src
+      - hw
+    macros:
+      - CFG_TUSB_MCU=OPT_MCU_STM32F4
+      - CFG_TUSB_OS=OPT_OS_NONE
+      - BOARD_TUD_RHPORT=0
+      - BOARD_TUD_MAX_SPEED=OPT_MODE_FULL_SPEED
+      - BOARD_STM32F407DISCO=1
+    config_headers:
+      - examples/device/hid_composite/src/tusb_config.h
+    active_path_prefixes:
+      - src
+      - examples/device/hid_composite/src
+      - hw/bsp
+    inactive_path_prefixes:
+      - examples/host
+      - examples/dual
+      - examples/typec
+      - test
+    active_port: src/portable/synopsys/dwc2

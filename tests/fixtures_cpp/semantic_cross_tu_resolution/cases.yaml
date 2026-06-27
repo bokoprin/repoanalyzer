@@ -1,0 +1,48 @@
+cases:
+  - id: semantic_cross_tu_resolution_001
+    question: "app::cross_target はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: app::Device::start
+          callee: cross_target
+          payload_contains:
+            resolution_status: resolved
+            resolution_scope: cross_translation_unit
+            callee_qualified_name: app::cross_target
+            callee_definition_path: src/util.cpp
+            cross_tu: true
+    answerability: answerable
+    required_unknowns: []
+
+  - id: semantic_cross_tu_resolution_002
+    question: "app::Device::start はどこから呼ばれる？"
+    mode: callers
+    expected:
+      must_include:
+        - fact_type: call
+          caller: main
+          callee: app::Device::start
+          call_kind: member_direct
+          payload_contains:
+            resolution_status: resolved
+            resolution_scope: cross_translation_unit
+            callee_definition_path: src/device.cpp
+            cross_tu: true
+    answerability: answerable
+    required_unknowns: []
+
+  - id: semantic_cross_tu_resolution_003
+    question: "main から app::cross_target へ到達する call path"
+    mode: call_path
+    expected:
+      must_include:
+        - fact_type: call_path
+          subject: main
+          predicate: reaches
+          object: app::cross_target
+          payload_list_contains:
+            route_qualified: app::Device::start
+    answerability: answerable
+    required_unknowns: []

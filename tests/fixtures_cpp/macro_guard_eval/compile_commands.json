@@ -1,0 +1,12 @@
+[
+  {
+    "directory": ".",
+    "command": "c++ -Iinclude -DFEATURE_EXTRA -DDISABLE_DEFAULT_HELPER -DFEATURE_ALT=1 -DFEATURE_ZERO=0 -c src/main.cpp",
+    "file": "src/main.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "c++ -Iinclude -DFEATURE_EXTRA -DDISABLE_DEFAULT_HELPER -DFEATURE_ALT=1 -DFEATURE_ZERO=0 -c src/device.cpp",
+    "file": "src/device.cpp"
+  }
+]
