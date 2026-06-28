@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RepoAnalyzer TinyUSB Agent Answer JSONL Record",
+  "type": "object",
+  "required": [
+    "run_id",
+    "agent_id",
+    "model",
+    "case_id",
+    "profile",
+    "question",
+    "tool_trace",
+    "evidence",
+    "answer",
+    "verdict",
+    "confidence",
+    "self_check",
+    "known_limitations"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "description": "例: 2026-06-27-cline-qwen35b-01"
+    },
+    "agent_id": {
+      "type": "string",
+      "enum": [
+        "cline",
+        "qwen_code",
+        "other"
+      ]
+    },
+    "model": {
+      "type": "string",
+      "description": "例: qwen3.5-35b"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "profile": {
+      "type": "string"
+    },
+    "question": {
+      "type": "string"
+    },
+    "tool_trace": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "tool",
+          "purpose",
+          "input_summary",
+          "output_summary"
+        ],
+        "properties": {
+          "tool": {
+            "type": "string",
+            "description": "例: collect_evidence, read_file_range, find_definitions"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "input_summary": {
+            "type": "string"
+          },
+          "output_summary": {
+            "type": "string"
+          },
+          "paths_read": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "line_ranges_read": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "start_line",
+          "end_line",
+          "symbol",
+          "supports"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "start_line": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "end_line": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "supports": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "supports",
+              "conditional",
+              "unknown",
+              "background"
+            ]
+          },
+          "quote_excerpt": {
+            "type": "string",
+            "description": "短い抜粋。長いコード全文は不要。"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "answer": {
+      "type": "string"
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "supported",
+        "conditional",
+        "unknown",
+        "unsupported",
+        "mixed"
+      ]
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "self_check": {
+      "type": "object",
+      "required": [
+        "used_collect_evidence",
+        "used_read_file_range",
+        "mentioned_required_files",
+        "mentioned_required_symbols",
+        "avoided_forbidden_claims",
+        "notes"
+      ],
+      "properties": {
+        "used_collect_evidence": {
+          "type": "boolean"
+        },
+        "used_read_file_range": {
+          "type": "boolean"
+        },
+        "mentioned_required_files": {
+          "type": "boolean"
+        },
+        "mentioned_required_symbols": {
+          "type": "boolean"
+        },
+        "avoided_forbidden_claims": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "known_limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "repoanalyzer_fix_suggestions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "agent_notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

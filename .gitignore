@@ -6,3 +6,11 @@ __pycache__/
 .repoanalyzer-index/
 export/
 *.pyc
+*.egg-info/
+.tmp-cline/
+cline-mcp-config.json
+repoanalyzer_tinyusb_agent_eval_kit/
+eval/outputs.zip
+eval/outputs/*_events.jsonl
+eval/outputs/cline_events/
+eval/outputs/tinyusb_answers_qwen_code.jsonl

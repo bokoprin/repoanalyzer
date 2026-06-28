@@ -1,0 +1,135 @@
+[
+  {
+    "case_id": "tinyusb_desc_001",
+    "ok": true,
+    "repaired": false,
+    "tool_count": 26,
+    "used_collect_evidence": true,
+    "used_read_file_range": true,
+    "disallowed_tools": [
+      "run_commands",
+      "search_codebase"
+    ],
+    "event_file": "eval\\outputs\\cline_events\\tinyusb_desc_001.events.jsonl"
+  },
+  {
+    "case_id": "tinyusb_desc_002",
+    "ok": true,
+    "repaired": false,
+    "tool_count": 30,
+    "used_collect_evidence": true,
+    "used_read_file_range": true,
+    "disallowed_tools": [
+      "run_commands",
+      "search_codebase"
+    ],
+    "event_file": "eval\\outputs\\cline_events\\tinyusb_desc_002.events.jsonl"
+  },
+  {
+    "case_id": "tinyusb_desc_003",
+    "ok": true,
+    "repaired": false,
+    "tool_count": 21,
+    "used_collect_evidence": true,
+    "used_read_file_range": true,
+    "disallowed_tools": [
+      "search_codebase"
+    ],
+    "event_file": "eval\\outputs\\cline_events\\tinyusb_desc_003.events.jsonl"
+  },
+  {
+    "case_id": "tinyusb_event_001",
+    "ok": true,
+    "repaired": false,
+    "tool_count": 28,
+    "used_collect_evidence": true,
+    "used_read_file_range": true,
+    "disallowed_tools": [],
+    "event_file": "eval\\outputs\\cline_events\\tinyusb_event_001.events.jsonl"
+  },
+  {
+    "case_id": "tinyusb_dispatch_001",
+    "ok": true,
+    "repaired": false,
+    "tool_count": 49,
+    "used_collect_evidence": true,
+    "used_read_file_range": true,
+    "disallowed_tools": [
+      "run_commands",
+      "search_codebase"
+    ],
+    "event_file": "eval\\outputs\\cline_events\\tinyusb_dispatch_001.events.jsonl"
+  },
+  {
+    "case_id": "tinyusb_xfer_001",
+    "ok": true,
+    "repaired": false,
+    "tool_count": 38,
+    "used_collect_evidence": true,
+    "used_read_file_range": true,
+    "disallowed_tools": [
+      "search_codebase",
+      "verify_answer",
+      "verify_text"
+    ],
+    "event_file": "eval\\outputs\\cline_events\\tinyusb_xfer_001.events.jsonl"
+  },
+  {
+    "case_id": "tinyusb_cdc_001",
+    "ok": true,
+    "repaired": false,
+    "tool_count": 50,
+    "used_collect_evidence": true,
+    "used_read_file_range": true,
+    "disallowed_tools": [
+      "repo_status",
+      "run_commands",
+      "search_codebase"
+    ],
+    "event_file": "eval\\outputs\\cline_events\\tinyusb_cdc_001.events.jsonl"
+  },
+  {
+    "case_id": "tinyusb_msc_001",
+    "ok": true,
+    "repaired": false,
+    "tool_count": 33,
+    "used_collect_evidence": true,
+    "used_read_file_range": true,
+    "disallowed_tools": [
+      "search_codebase",
+      "verify_answer"
+    ],
+    "event_file": "eval\\outputs\\cline_events\\tinyusb_msc_001.events.jsonl"
+  },
+  {
+    "case_id": "tinyusb_callback_001",
+    "ok": true,
+    "repaired": false,
+    "tool_count": 22,
+    "used_collect_evidence": true,
+    "used_read_file_range": true,
+    "disallowed_tools": [
+      "read_files",
+      "run_commands",
+      "search_codebase"
+    ],
+    "event_file": "eval\\outputs\\cline_events\\tinyusb_callback_001.events.jsonl"
+  },
+  {
+    "case_id": "tinyusb_conditional_001",
+    "ok": true,
+    "repaired": false,
+    "tool_count": 31,
+    "used_collect_evidence": true,
+    "used_read_file_range": true,
+    "disallowed_tools": [
+      "read_files",
+      "repo_status",
+      "run_commands",
+      "search_codebase",
+      "server_info",
+      "verify_answer"
+    ],
+    "event_file": "eval\\outputs\\cline_events\\tinyusb_conditional_001.events.jsonl"
+  }
+]
