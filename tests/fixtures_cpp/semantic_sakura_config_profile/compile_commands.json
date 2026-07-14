@@ -1,3 +1,0 @@
-[
-  {"directory": ".", "command": "c++ -Iinclude -c src/config_profile.cpp", "file": "src/config_profile.cpp"}
-]

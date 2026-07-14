@@ -1,3 +1,0 @@
-[
-  {"directory": ".", "command": "c++ -Iinclude -c src/grep.cpp", "file": "src/grep.cpp"}
-]

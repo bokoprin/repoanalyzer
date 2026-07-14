@@ -1,3 +1,0 @@
-[
-  {"directory": ".", "command": "c++ -Iinclude -c src/undo_edit.cpp", "file": "src/undo_edit.cpp"}
-]
