@@ -16,18 +16,22 @@ jobs:
   diagnose:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Inspect source archive
+      - name: Download and inspect source archive
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euxo pipefail
-          ls -lah
+          curl -L --fail \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github.raw+json' \
+            -o model-color-source.tar.xz \
+            'https://api.github.com/repos/bokoprin/repoanalyzer/contents/model-color-source.tar.xz?ref=tmp/model-color-apk-build-20260714'
           stat model-color-source.tar.xz
           file model-color-source.tar.xz
           sha256sum model-color-source.tar.xz
           xz -tv model-color-source.tar.xz
           tar -tJf model-color-source.tar.xz | head -30
           mkdir -p build-source
-          tar -xJvf model-color-source.tar.xz -C build-source
-          find build-source -maxdepth 3 -type f | head -50
+          tar -xJf model-color-source.tar.xz -C build-source
           find build-source -name gradlew -type f -print
