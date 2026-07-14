@@ -1,3 +1,0 @@
-[
-  {"directory": ".", "command": "c++ -Isrc -c src/app.cpp", "file": "src/app.cpp"}
-]

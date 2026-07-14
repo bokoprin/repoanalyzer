@@ -1,0 +1,19 @@
+name: Temporary Model Color Drive Test
+
+on:
+  push:
+    branches:
+      - tmp/model-color-apk-build-20260714
+  workflow_dispatch:
+
+jobs:
+  test-download:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download source from Drive
+        run: |
+          set -euxo pipefail
+          curl -L --fail --retry 3 -o source.zip 'https://drive.usercontent.google.com/download?id=1hmlgpf4YipwVucb_3BHXt5aiyRXiKDCt&export=download&confirm=t'
+          file source.zip
+          ls -lh source.zip
+          unzip -t source.zip

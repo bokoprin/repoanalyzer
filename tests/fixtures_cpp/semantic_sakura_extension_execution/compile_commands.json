@@ -1,7 +1,0 @@
-[
-  {
-    "directory": ".",
-    "command": "clang++ -Iinclude -std=c++17 -c src/extension_execution.cpp",
-    "file": "src/extension_execution.cpp"
-  }
-]

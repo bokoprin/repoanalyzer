@@ -1,5 +1,0 @@
-#pragma once
-#define REPORT_ID_KEYBOARD 1
-#define REPORT_ID_MOUSE 2
-#define REPORT_ID_CONSUMER_CONTROL 3
-#define REPORT_ID_GAMEPAD 4

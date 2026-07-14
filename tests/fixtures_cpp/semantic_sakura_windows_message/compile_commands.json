@@ -1,3 +1,0 @@
-[
-  {"directory": ".", "command": "c++ -Iinclude -c src/windows_message.cpp", "file": "src/windows_message.cpp"}
-]
