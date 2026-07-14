@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - tmp/model-color-apk-build-20260714
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
