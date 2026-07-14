@@ -19,25 +19,53 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extract Android source
-        shell: bash
-        run: |
-          set -euo pipefail
-          tar -xJf tmp-model-color-build/model-color-source.tar.xz
-          test -f model-color-android/settings.gradle.kts
-
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
+      - uses: android-actions/setup-android@v3
+
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.4.1'
 
+      - name: Extract Android source
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -xJf tmp-model-color-build/model-color-source.tar.xz
+          SETTINGS="$(find "$GITHUB_WORKSPACE" -maxdepth 4 -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit)"
+          test -n "$SETTINGS"
+          PROJECT_DIR="$(dirname "$SETTINGS")"
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          echo "Detected project: $PROJECT_DIR"
+          ls -la "$PROJECT_DIR"
+
+      - name: Select installed Android API
+        shell: bash
+        run: |
+          SDK_PLATFORM="$(find "$ANDROID_SDK_ROOT/platforms" -maxdepth 1 -mindepth 1 -type d -printf '%f\n' | sed -n 's/^android-//p' | sort -V | tail -n 1)"
+          test -n "$SDK_PLATFORM"
+          echo "Using Android API $SDK_PLATFORM"
+          if [ "$SDK_PLATFORM" != '37' ]; then
+            find "$PROJECT_DIR" -maxdepth 2 -type f \( -name build.gradle -o -name build.gradle.kts \) -exec sed -i "s/compileSdk = 37/compileSdk = ${SDK_PLATFORM}/g; s/targetSdk = 37/targetSdk = ${SDK_PLATFORM}/g" {} +
+          fi
+
       - name: Build and test
-        working-directory: model-color-android
-        run: gradle testDebugUnitTest lintDebug assembleDebug --stacktrace
+        shell: bash
+        run: |
+          cd "$PROJECT_DIR"
+          gradle testDebugUnitTest lintDebug assembleDebug --stacktrace --no-daemon
+
+      - name: Verify APK
+        shell: bash
+        run: |
+          APK="$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          unzip -t "$APK"
+          jarsigner -verify "$APK"
+          sha256sum "$APK" | tee "$GITHUB_WORKSPACE/app-debug.apk.sha256"
 
       - name: Upload reports
         if: always()
@@ -45,13 +73,17 @@ jobs:
         with:
           name: model-color-build-reports
           path: |
-            model-color-android/app/build/reports/**
-            model-color-android/app/build/test-results/**
+            ${{ env.PROJECT_DIR }}/app/build/reports/**
+            ${{ env.PROJECT_DIR }}/app/build/test-results/**
           if-no-files-found: ignore
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: model-color-debug-apk
-          path: model-color-android/app/build/outputs/apk/debug/app-debug.apk
+          path: |
+            ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
+            app-debug.apk.sha256
           if-no-files-found: error
+          retention-days: 7
