@@ -30,12 +30,15 @@ jobs:
         with:
           gradle-version: '9.4.1'
 
-      - name: Extract Android source
+      - name: Download and extract Android source
         shell: bash
         run: |
-          set -euo pipefail
-          tar -xJf tmp-model-color-build/model-color-source.tar.xz
-          SETTINGS="$(find "$GITHUB_WORKSPACE" -maxdepth 4 -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit)"
+          set -euxo pipefail
+          curl -L --fail --retry 3 -o source.zip 'https://drive.usercontent.google.com/download?id=1hmlgpf4YipwVucb_3BHXt5aiyRXiKDCt&export=download&confirm=t'
+          unzip -t source.zip
+          mkdir -p build-source
+          unzip -q source.zip -d build-source
+          SETTINGS="$(find "$GITHUB_WORKSPACE/build-source" -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit)"
           test -n "$SETTINGS"
           PROJECT_DIR="$(dirname "$SETTINGS")"
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
