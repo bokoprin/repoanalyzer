@@ -29,16 +29,13 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android platform
+      - name: Select preinstalled Android platform
         shell: bash
         run: |
-          yes | sdkmanager --licenses >/dev/null || true
-          if sdkmanager --list | grep -q 'platforms;android-37'; then
-            SDK_PLATFORM=37
-          else
-            SDK_PLATFORM=36
-          fi
-          sdkmanager 'platform-tools' "platforms;android-${SDK_PLATFORM}"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          find "$ANDROID_SDK_ROOT/platforms" -maxdepth 1 -mindepth 1 -type d -printf '%f\n' | sort -V
+          SDK_PLATFORM="$(find "$ANDROID_SDK_ROOT/platforms" -maxdepth 1 -mindepth 1 -type d -printf '%f\n' | sed -n 's/^android-//p' | sort -V | tail -n 1)"
+          test -n "$SDK_PLATFORM"
           echo "SDK_PLATFORM=${SDK_PLATFORM}" >> "$GITHUB_ENV"
 
       - name: Extract application source
