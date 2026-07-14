@@ -33,7 +33,13 @@ jobs:
         shell: bash
         run: |
           yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager 'platform-tools' 'platforms;android-36' 'build-tools;36.0.0'
+          if sdkmanager --list | grep -q 'platforms;android-37'; then
+            SDK_PLATFORM=37
+          else
+            SDK_PLATFORM=36
+          fi
+          sdkmanager 'platform-tools' "platforms;android-${SDK_PLATFORM}"
+          echo "SDK_PLATFORM=${SDK_PLATFORM}" >> "$GITHUB_ENV"
 
       - name: Extract application source
         shell: bash
@@ -43,8 +49,10 @@ jobs:
           PROJECT_DIR="$(find "$GITHUB_WORKSPACE/build-source" -name gradlew -type f -printf '%h\n' | head -n 1)"
           test -n "$PROJECT_DIR"
           chmod +x "$PROJECT_DIR/gradlew"
-          sed -i 's/compileSdk = 37/compileSdk = 36/' "$PROJECT_DIR/app/build.gradle.kts"
-          sed -i 's/targetSdk = 37/targetSdk = 36/' "$PROJECT_DIR/app/build.gradle.kts"
+          if [ "$SDK_PLATFORM" != '37' ]; then
+            sed -i "s/compileSdk = 37/compileSdk = ${SDK_PLATFORM}/" "$PROJECT_DIR/app/build.gradle.kts"
+            sed -i "s/targetSdk = 37/targetSdk = ${SDK_PLATFORM}/" "$PROJECT_DIR/app/build.gradle.kts"
+          fi
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
       - name: Run unit tests
