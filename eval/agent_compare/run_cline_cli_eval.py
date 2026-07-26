@@ -7,7 +7,6 @@ import os
 import re
 import subprocess
 import sys
-import time
 import shutil
 from pathlib import Path
 from typing import Any
@@ -19,6 +18,7 @@ OUTPUT_DIR = REPO_ROOT / "eval" / "outputs"
 DATA_DIR = REPO_ROOT / ".tmp-cline"
 CLINE_CWD = DATA_DIR / "workdir"
 MCP_SETTINGS = DATA_DIR / "settings" / "cline_mcp_settings.json"
+GLOBAL_SETTINGS = DATA_DIR / "settings" / "global-settings.json"
 CLINE_ANSWERS = OUTPUT_DIR / "tinyusb_answers_cline.jsonl"
 EVENTS_DIR = OUTPUT_DIR / "cline_events"
 MODEL = "qwen3.6:27b_q4_k_s"
@@ -89,6 +89,56 @@ def ensure_mcp_settings() -> None:
         }
     }
     MCP_SETTINGS.write_text(json.dumps(settings, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def ensure_repoanalyzer_only_tools() -> None:
+    settings = {
+        "autoUpdateEnabled": True,
+        "telemetryOptOut": False,
+        "disabledTools": [
+            "ask_question",
+            "editor",
+            "fetch_web_content",
+            "read_files",
+            "run_commands",
+            "search_codebase",
+            "skills",
+            "spawn_agent",
+            "teams",
+            "team_attach_outcome_fragment",
+            "team_await_runs",
+            "team_broadcast",
+            "team_cancel_run",
+            "team_cleanup",
+            "team_create_outcome",
+            "team_finalize_outcome",
+            "team_list_outcomes",
+            "team_list_runs",
+            "team_mission_log",
+            "team_read_mailbox",
+            "team_review_outcome_fragment",
+            "team_run_task",
+            "team_send_message",
+            "team_shutdown_teammate",
+            "team_spawn_teammate",
+            "team_status",
+            "team_task",
+            "repoanalyzer-tinyusb__answer_contract",
+            "repoanalyzer-tinyusb__preflight",
+            "repoanalyzer-tinyusb__plan_question",
+            "repoanalyzer-tinyusb__query_diagnostics",
+            "repoanalyzer-tinyusb__real_repo_eval",
+            "repoanalyzer-tinyusb__repo_status",
+            "repoanalyzer-tinyusb__server_info",
+            "repoanalyzer-tinyusb__verify_answer",
+            "repoanalyzer-tinyusb__verify_claim",
+            "repoanalyzer-tinyusb__verify_claims",
+            "repoanalyzer-tinyusb__verify_text",
+            "repoanalyzer-tinyusb__workflow_history",
+            "repoanalyzer-tinyusb__workflow_run",
+        ],
+    }
+    GLOBAL_SETTINGS.write_text(json.dumps(settings, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def load_cases(limit: int | None = None) -> list[dict[str, str]]:
@@ -164,7 +214,12 @@ def run_cline(prompt: str, timeout: int, event_path: Path) -> tuple[int, list[di
 
 
 def run_cline_with_auto_approve(
-    prompt: str, timeout: int, event_path: Path, *, auto_approve: bool
+    prompt: str,
+    timeout: int,
+    event_path: Path,
+    *,
+    auto_approve: bool,
+    approval_guard: bool = False,
 ) -> tuple[int, list[dict[str, Any]], str]:
     npx = shutil.which("npx.cmd") or shutil.which("npx") or "npx"
     cmd = [
@@ -394,79 +449,115 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--timeout", type=int, default=420)
+    parser.add_argument("--approval-guard", action="store_true")
+    parser.add_argument("--answers-path", type=Path, default=CLINE_ANSWERS)
+    parser.add_argument("--summary-path", type=Path, default=OUTPUT_DIR / "cline_cli_eval_summary.json")
+    parser.add_argument("--events-dir", type=Path, default=EVENTS_DIR)
+    parser.add_argument("--approval-log", type=Path, default=OUTPUT_DIR / "cline_approval_guard.jsonl")
     args = parser.parse_args()
 
     ensure_dirs()
     ensure_mcp_settings()
+    if args.approval_guard:
+        ensure_repoanalyzer_only_tools()
+    args.events_dir.mkdir(parents=True, exist_ok=True)
+    args.answers_path.parent.mkdir(parents=True, exist_ok=True)
+    args.summary_path.parent.mkdir(parents=True, exist_ok=True)
     cases = load_cases(args.limit)
-    CLINE_ANSWERS.write_text("", encoding="utf-8")
+    args.answers_path.write_text("", encoding="utf-8")
+    args.approval_log.write_text("", encoding="utf-8")
 
     summary: list[dict[str, Any]] = []
-    for index, case in enumerate(cases, 1):
-        case_id = case["case_id"]
-        print(f"[{index}/{len(cases)}] running {case_id}", flush=True)
-        event_path = EVENTS_DIR / f"{case_id}.events.jsonl"
-        repair_event_path = EVENTS_DIR / f"{case_id}.repair.events.jsonl"
-
-        try:
-            code, events, _ = run_cline(build_case_prompt(case), args.timeout, event_path)
-            text = extract_run_text(events)
-            trace = extract_tool_trace(events)
-            obj = parse_json_answer(text)
-            repaired = False
-            if obj is None:
-                print(f"[{index}/{len(cases)}] repair {case_id}", flush=True)
-                tool_names = [t["tool"] for t in trace]
-                _, repair_events, _ = run_cline_with_auto_approve(
-                    build_repair_prompt(case, text, tool_names),
-                    180,
-                    repair_event_path,
-                    auto_approve=False,
+    try:
+        if args.approval_guard:
+            args.approval_log.write_text(
+                json.dumps(
+                    {
+                        "type": "disabled_tools_guard",
+                        "settings_file": str(GLOBAL_SETTINGS),
+                        "disabledTools": json.loads(GLOBAL_SETTINGS.read_text(encoding="utf-8"))["disabledTools"],
+                    },
+                    ensure_ascii=False,
+                    separators=(",", ":"),
                 )
-                repair_text = extract_run_text(repair_events)
-                repair_trace = extract_tool_trace(repair_events)
-                obj = parse_json_answer(repair_text)
-                trace.extend(repair_trace)
-                repaired = True
-            if obj is None:
-                answer = failure_answer(case, trace, f"Cline output was not parseable as JSON; exit_code={code}")
-                ok = False
-            else:
-                answer = normalize_answer(case, obj, trace)
-                ok = True
-            bad_tools = disallowed_tools(trace)
-            if bad_tools:
-                answer.setdefault("known_limitations", []).append(
-                    "Cline called disallowed non-evaluation tools: " + ", ".join(bad_tools)
-                )
-                answer["agent_notes"] = (str(answer.get("agent_notes") or "") + " disallowed_tools_detected").strip()
-            with CLINE_ANSWERS.open("a", encoding="utf-8", newline="\n") as f:
-                f.write(json.dumps(answer, ensure_ascii=False, separators=(",", ":")) + "\n")
-            summary.append(
-                {
-                    "case_id": case_id,
-                    "ok": ok,
-                    "repaired": repaired,
-                    "tool_count": len(trace),
-                    "used_collect_evidence": any(t["tool"] == "collect_evidence" for t in trace),
-                    "used_read_file_range": any(t["tool"] == "read_file_range" for t in trace),
-                    "disallowed_tools": bad_tools,
-                    "event_file": str(event_path.relative_to(REPO_ROOT)),
-                }
+                + "\n",
+                encoding="utf-8",
             )
-            print(f"[{index}/{len(cases)}] done {case_id} ok={ok} repaired={repaired}", flush=True)
-        except Exception as exc:
-            trace: list[dict[str, str]] = []
-            answer = failure_answer(case, trace, f"runner exception: {type(exc).__name__}: {exc}")
-            with CLINE_ANSWERS.open("a", encoding="utf-8", newline="\n") as f:
-                f.write(json.dumps(answer, ensure_ascii=False, separators=(",", ":")) + "\n")
-            summary.append({"case_id": case_id, "ok": False, "error": str(exc)})
-            print(f"[{index}/{len(cases)}] error {case_id}: {exc}", flush=True)
+        for index, case in enumerate(cases, 1):
+            case_id = case["case_id"]
+            print(f"[{index}/{len(cases)}] running {case_id}", flush=True)
+            event_path = args.events_dir / f"{case_id}.events.jsonl"
+            repair_event_path = args.events_dir / f"{case_id}.repair.events.jsonl"
 
-    summary_path = OUTPUT_DIR / "cline_cli_eval_summary.json"
-    summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"wrote {CLINE_ANSWERS}")
-    print(f"wrote {summary_path}")
+            try:
+                code, events, _ = run_cline_with_auto_approve(
+                    build_case_prompt(case),
+                    args.timeout,
+                    event_path,
+                    auto_approve=True,
+                    approval_guard=args.approval_guard,
+                )
+                text = extract_run_text(events)
+                trace = extract_tool_trace(events)
+                obj = parse_json_answer(text)
+                repaired = False
+                repair_tool_names: list[str] = []
+                if obj is None:
+                    print(f"[{index}/{len(cases)}] repair {case_id}", flush=True)
+                    tool_names = [t["tool"] for t in trace]
+                    _, repair_events, _ = run_cline_with_auto_approve(
+                        build_repair_prompt(case, text, tool_names),
+                        180,
+                        repair_event_path,
+                        auto_approve=False,
+                        approval_guard=args.approval_guard,
+                    )
+                    repair_text = extract_run_text(repair_events)
+                    repair_trace = extract_tool_trace(repair_events)
+                    repair_tool_names = [t["tool"] for t in repair_trace]
+                    obj = parse_json_answer(repair_text)
+                    repaired = True
+                if obj is None:
+                    answer = failure_answer(case, trace, f"Cline output was not parseable as JSON; exit_code={code}")
+                    ok = False
+                else:
+                    answer = normalize_answer(case, obj, trace)
+                    ok = True
+                bad_tools = disallowed_tools(trace)
+                if bad_tools:
+                    answer.setdefault("known_limitations", []).append(
+                        "Cline called disallowed non-evaluation tools: " + ", ".join(bad_tools)
+                    )
+                    answer["agent_notes"] = (str(answer.get("agent_notes") or "") + " disallowed_tools_detected").strip()
+                with args.answers_path.open("a", encoding="utf-8", newline="\n") as f:
+                    f.write(json.dumps(answer, ensure_ascii=False, separators=(",", ":")) + "\n")
+                summary.append(
+                    {
+                        "case_id": case_id,
+                        "ok": ok,
+                        "repaired": repaired,
+                        "tool_count": len(trace),
+                        "used_collect_evidence": any(t["tool"] == "collect_evidence" for t in trace),
+                        "used_read_file_range": any(t["tool"] == "read_file_range" for t in trace),
+                        "disallowed_tools": bad_tools,
+                        "repair_tool_names": repair_tool_names,
+                        "event_file": str(event_path.resolve().relative_to(REPO_ROOT)),
+                    }
+                )
+                print(f"[{index}/{len(cases)}] done {case_id} ok={ok} repaired={repaired}", flush=True)
+            except Exception as exc:
+                trace = []
+                answer = failure_answer(case, trace, f"runner exception: {type(exc).__name__}: {exc}")
+                with args.answers_path.open("a", encoding="utf-8", newline="\n") as f:
+                    f.write(json.dumps(answer, ensure_ascii=False, separators=(",", ":")) + "\n")
+                summary.append({"case_id": case_id, "ok": False, "error": str(exc)})
+                print(f"[{index}/{len(cases)}] error {case_id}: {exc}", flush=True)
+    finally:
+        pass
+
+    args.summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"wrote {args.answers_path}")
+    print(f"wrote {args.summary_path}")
     return 0
 
 
