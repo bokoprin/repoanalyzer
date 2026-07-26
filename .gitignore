@@ -1,16 +1,22 @@
+# Python
 __pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+build/
+dist/
+
+# Test and analysis caches
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
-.venv/
 .repoanalyzer-index/
-export/
-*.pyc
-*.egg-info/
+
+# Local agent configuration
 .tmp-cline/
 cline-mcp-config.json
-repoanalyzer_tinyusb_agent_eval_kit/
-eval/outputs.zip
-eval/outputs/*_events.jsonl
-eval/outputs/cline_events/
-eval/outputs/tinyusb_answers_qwen_code.jsonl
+
+# Generated artifacts
+export/
+eval/outputs/
+eval/*.zip

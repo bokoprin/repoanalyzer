@@ -145,8 +145,8 @@ function Invoke-OptionalCommand {
 }
 
 $batPath = [System.IO.Path]::GetFullPath($env:EXPORT_CONTEXT_BAT)
-$toolDir = Split-Path -Path $batPath -Parent
-$repoRoot = Split-Path -Path $toolDir -Parent
+$scriptDir = Split-Path -Path $batPath -Parent
+$repoRoot = Split-Path -Path $scriptDir -Parent
 $exportDir = Join-Path $repoRoot "export"
 
 $requiredItems = @(
@@ -158,10 +158,9 @@ $requiredItems = @(
 )
 
 $optionalItems = @(
-    "attic/reference",
-    "memo.md",
+    "docs/PROJECT_VISION.md",
     ".gitignore",
-    "tool/export_chatgpt_context.bat"
+    "scripts/export_chatgpt_context.bat"
 )
 
 $missingRequired = @()
@@ -247,9 +246,8 @@ repoanalyzer is a C/C++ Code Evidence Engine for MCP-based LLM agents. Its curre
 - `repoanalyzer/`: Python package source.
 - `tests/`: pytest tests and C/C++ fixtures.
 - `docs/`: design and contract documents.
-- `attic/reference/`: older reference implementation useful for design comparison.
-- Root project files: `README.md`, `memo.md`, `pyproject.toml`, `.gitignore`.
-- `tool/export_chatgpt_context.bat`: the export tool that created this archive.
+- Root project files: `README.md`, `pyproject.toml`, `.gitignore`.
+- `scripts/export_chatgpt_context.bat`: the export tool that created this archive.
 - Generated context files: `REPO_TREE.txt`, `GIT_STATUS.txt`, `GIT_DIFF.patch`, `ENVIRONMENT.txt`.
 
 ## Excluded
@@ -258,7 +256,7 @@ The archive intentionally excludes Git internals, export output, caches, virtual
 
 ## Suggested ChatGPT Prompt
 
-Use this archive as the complete working context for repoanalyzer. Start from `README.md`, `memo.md`, `docs/`, and `pyproject.toml`, then inspect `repoanalyzer/` and `tests/` before proposing design or implementation changes. Treat `attic/reference/` as historical reference, not active source.
+Use this archive as the complete working context for repoanalyzer. Start from `README.md`, `docs/PROJECT_VISION.md`, and `pyproject.toml`, then inspect `repoanalyzer/`, `tests/`, and the remaining `docs/` before proposing design or implementation changes.
 "@
     Set-Content -LiteralPath (Join-Path $stagingRoot "CHATGPT_CONTEXT.md") -Value $context -Encoding UTF8
 
