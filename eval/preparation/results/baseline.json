@@ -1,0 +1,86 @@
+{
+  "schema_version": "repoanalyzer_preparation_baseline.v1",
+  "captured_at": "2026-07-26T21:25:52+09:00",
+  "repo_commit": "d3380e38e1339d11bbd0893da43475b97820c5e2",
+  "branch": "main",
+  "default_branch": "main",
+  "remote": "https://github.com/bokoprin/repoanalyzer.git",
+  "worktree": {
+    "user_changes_preserved": [
+      ".env"
+    ]
+  },
+  "environment": {
+    "python": "3.14.2",
+    "pytest": "9.1.1",
+    "ruff": "0.15.20",
+    "mcp": "1.28.1"
+  },
+  "commands": [
+    {
+      "command": ".\\.venv\\Scripts\\python.exe -m pip install -e \".[dev,mcp]\"",
+      "status": "passed"
+    },
+    {
+      "command": ".\\.venv\\Scripts\\python.exe -m pytest -q -m \"not upstream\"",
+      "status": "passed",
+      "passed": 165,
+      "failed": 0,
+      "deselected": 1,
+      "elapsed_seconds": 142.34
+    },
+    {
+      "command": ".\\.venv\\Scripts\\python.exe -m ruff check repoanalyzer tests",
+      "status": "failed_existing",
+      "error_count": 25,
+      "introduced_by_preparation": false
+    },
+    {
+      "command": "mypy repoanalyzer tests",
+      "status": "failed_existing",
+      "error_count": 47,
+      "files_with_errors": 14,
+      "introduced_by_preparation": false
+    },
+    {
+      "command": ".\\.venv\\Scripts\\python.exe -m compileall -q repoanalyzer tests",
+      "status": "passed"
+    },
+    {
+      "command": ".\\.venv\\Scripts\\python.exe -m repoanalyzer.cli --help",
+      "status": "passed"
+    }
+  ],
+  "fixture_smoke": {
+    "repo": "tests/fixtures_cpp/basic_call",
+    "ingest": {
+      "status": "indexed",
+      "files": 3,
+      "facts": 25
+    },
+    "index_status": "clean",
+    "definition_count": 1,
+    "reference_count": 1,
+    "caller_count": 1,
+    "callee_count": 1,
+    "source_range": {
+      "path": "src/device.cpp",
+      "start_line": 1,
+      "end_line": 9
+    },
+    "evidence": {
+      "answerability": "answerable",
+      "fact_count": 2,
+      "support_level": "medium"
+    }
+  },
+  "available_real_repo_evaluations": [
+    "real-repo-eval",
+    "tinyusb-upstream-smoke",
+    "eval/agent_compare/run_cline_cli_eval.py"
+  ],
+  "notes": [
+    "The Ruff and mypy failures were captured before preparation code was added.",
+    "The upstream-marked test was intentionally excluded from the self-contained baseline."
+  ]
+}

@@ -15,8 +15,11 @@ dist/
 # Local agent configuration
 .tmp-cline/
 cline-mcp-config.json
+.env
+.env.*
 
 # Generated artifacts
 export/
 eval/outputs/
 eval/*.zip
+.e2e-work/

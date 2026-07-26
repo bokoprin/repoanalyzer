@@ -1,0 +1,506 @@
+{
+  "schema_version": "repoanalyzer_mcp_process_smoke.v1",
+  "ok": true,
+  "transport": "stdio",
+  "initialize": {
+    "protocol_version": "2025-11-25",
+    "server_name": "repoanalyzer"
+  },
+  "tool_count": 24,
+  "available_tools": [
+    "answer_contract",
+    "collect_evidence",
+    "extract_claims",
+    "find_callees",
+    "find_callees_page",
+    "find_callers",
+    "find_callers_page",
+    "find_definitions",
+    "find_definitions_page",
+    "find_references",
+    "find_references_page",
+    "plan_question",
+    "preflight",
+    "query_diagnostics",
+    "read_file_range",
+    "real_repo_eval",
+    "repo_status",
+    "server_info",
+    "verify_answer",
+    "verify_claim",
+    "verify_claims",
+    "verify_text",
+    "workflow_history",
+    "workflow_run"
+  ],
+  "calls": [
+    {
+      "name": "server_info",
+      "arguments": {},
+      "response": {
+        "is_error": false,
+        "content": {
+          "repo": "<repo>",
+          "index_ready": true,
+          "db_path": "<repo>\\.repoanalyzer-index\\index.sqlite3",
+          "tools": [
+            "server_info",
+            "read_file_range",
+            "find_definitions",
+            "find_references",
+            "find_callers",
+            "find_callees",
+            "collect_evidence",
+            "verify_claim",
+            "verify_claims",
+            "extract_claims",
+            "verify_text",
+            "repo_status",
+            "query_diagnostics",
+            "find_definitions_page",
+            "find_references_page",
+            "find_callers_page",
+            "find_callees_page",
+            "preflight",
+            "plan_question",
+            "verify_answer",
+            "answer_contract",
+            "workflow_run",
+            "workflow_history",
+            "real_repo_eval"
+          ]
+        }
+      },
+      "elapsed_ms": 4
+    },
+    {
+      "name": "repo_status",
+      "arguments": {},
+      "response": {
+        "is_error": false,
+        "content": {
+          "repo": "<repo>",
+          "db_path": "<repo>\\.repoanalyzer-index\\index.sqlite3",
+          "status": "clean",
+          "clean": true,
+          "indexed_files": 3,
+          "current_files": 3,
+          "stale": [],
+          "missing": [],
+          "new": [],
+          "metadata": {
+            "build_context_signature": {
+              "compile_commands": "<repo>\\compile_commands.json",
+              "compile_commands_sha256": "698bf4172724b2bc74fc31bfccaece873021c6493211808c130a313695503942",
+              "config_path": null,
+              "config_sha256": null,
+              "configured_macros": [],
+              "exclude_patterns": [],
+              "include_dirs": [],
+              "source_files": [
+                "src/device.cpp",
+                "src/main.cpp"
+              ],
+              "target_profile": {}
+            },
+            "compile_commands": "<repo>\\compile_commands.json",
+            "config_path": null,
+            "db_path": "<repo>\\.repoanalyzer-index\\index.sqlite3",
+            "exclude_patterns": [],
+            "fact_count": 25,
+            "indexed_file_count": 3,
+            "ingest_finished_at": "2026-07-26T12:56:18+00:00",
+            "ingest_mode": "full_reset",
+            "ingest_started_at": "2026-07-26T12:56:18+00:00",
+            "repo_root": "<repo>",
+            "schema_version": 2,
+            "target_profile": {},
+            "tool_version": "0.2.0"
+          }
+        }
+      },
+      "elapsed_ms": 17
+    },
+    {
+      "name": "find_definitions",
+      "arguments": {
+        "symbol": "init_device"
+      },
+      "response": {
+        "is_error": false,
+        "content": {
+          "result": [
+            {
+              "fact_type": "symbol",
+              "path": "src/device.cpp",
+              "start_line": 3,
+              "end_line": 5,
+              "confidence": "high",
+              "source": "semantic_cpp_lightweight",
+              "subject": "init_device()",
+              "predicate": "definition",
+              "object": "function",
+              "symbol": "init_device",
+              "qualified_name": "init_device",
+              "kind": "function",
+              "payload": {
+                "symbol_id": "sym_d8eb3c1528937380",
+                "signature": "",
+                "qualified_signature": "init_device()",
+                "return_type": "void",
+                "owner_type": null,
+                "namespace": null,
+                "scope": null,
+                "qualifiers": [],
+                "parameters": [],
+                "argument_count": 0,
+                "declaration_or_definition": "definition",
+                "semantic_phase": "phase3",
+                "build_status": "active",
+                "build_status_precision": "line_preprocessor_model",
+                "tu_context": {
+                  "kind": "translation_unit",
+                  "source": "src/device.cpp",
+                  "target_profile": "default",
+                  "compile_commands": true,
+                  "compile_commands_entry": true,
+                  "precision": "translation_unit",
+                  "included_headers": [
+                    "include/device.h"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "elapsed_ms": 10
+    },
+    {
+      "name": "find_references",
+      "arguments": {
+        "symbol": "init_device"
+      },
+      "response": {
+        "is_error": false,
+        "content": {
+          "result": [
+            {
+              "fact_type": "reference",
+              "path": "src/device.cpp",
+              "start_line": 8,
+              "end_line": 8,
+              "confidence": "medium",
+              "source": "semantic_cpp_lightweight",
+              "subject": "start_device",
+              "predicate": "references",
+              "object": "init_device",
+              "symbol": "init_device",
+              "qualified_name": "init_device",
+              "payload": {
+                "reference_kind": "call",
+                "resolution_status": "resolved",
+                "argument_count": 0,
+                "argument_expressions": [],
+                "argument_type_hints": [],
+                "candidate_symbol_ids": [
+                  "sym_d8eb3c1528937380"
+                ],
+                "candidate_qualified_names": [
+                  "init_device"
+                ],
+                "callee_symbol_id": "sym_d8eb3c1528937380",
+                "callee_qualified_name": "init_device",
+                "callee_signature": "",
+                "caller_qualified_name": "start_device",
+                "caller_symbol_id": "sym_e9335c9331d359c9",
+                "semantic_phase": "phase3",
+                "build_status": "active",
+                "build_status_precision": "line_preprocessor_model",
+                "tu_context": {
+                  "kind": "translation_unit",
+                  "source": "src/device.cpp",
+                  "target_profile": "default",
+                  "compile_commands": true,
+                  "compile_commands_entry": true,
+                  "precision": "translation_unit",
+                  "included_headers": [
+                    "include/device.h"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "elapsed_ms": 10
+    },
+    {
+      "name": "find_callers",
+      "arguments": {
+        "symbol": "init_device"
+      },
+      "response": {
+        "is_error": false,
+        "content": {
+          "result": [
+            {
+              "fact_type": "call",
+              "path": "src/device.cpp",
+              "start_line": 8,
+              "end_line": 8,
+              "confidence": "high",
+              "source": "semantic_cpp_lightweight",
+              "subject": "start_device",
+              "predicate": "calls",
+              "object": "init_device",
+              "caller": "start_device",
+              "callee": "init_device",
+              "call_kind": "direct",
+              "payload": {
+                "resolution_status": "resolved",
+                "argument_count": 0,
+                "argument_expressions": [],
+                "argument_type_hints": [],
+                "candidate_symbol_ids": [
+                  "sym_d8eb3c1528937380"
+                ],
+                "candidate_qualified_names": [
+                  "init_device"
+                ],
+                "callee_symbol_id": "sym_d8eb3c1528937380",
+                "callee_qualified_name": "init_device",
+                "callee_signature": "",
+                "caller_qualified_name": "start_device",
+                "caller_symbol_id": "sym_e9335c9331d359c9",
+                "semantic_phase": "phase3",
+                "build_status": "active",
+                "build_status_precision": "line_preprocessor_model",
+                "tu_context": {
+                  "kind": "translation_unit",
+                  "source": "src/device.cpp",
+                  "target_profile": "default",
+                  "compile_commands": true,
+                  "compile_commands_entry": true,
+                  "precision": "translation_unit",
+                  "included_headers": [
+                    "include/device.h"
+                  ]
+                },
+                "local_resolution_status": "resolved",
+                "global_candidate_qualified_names": [
+                  "init_device"
+                ],
+                "global_candidate_symbol_ids": [
+                  "sym_ddf7b97b9d0b9b7d",
+                  "sym_d8eb3c1528937380"
+                ],
+                "resolution_scope": "translation_unit",
+                "callee_definition_path": "src/device.cpp",
+                "callee_definition_line": 3,
+                "cross_tu": false
+              }
+            }
+          ]
+        }
+      },
+      "elapsed_ms": 9
+    },
+    {
+      "name": "find_callees",
+      "arguments": {
+        "symbol": "start_device"
+      },
+      "response": {
+        "is_error": false,
+        "content": {
+          "result": [
+            {
+              "fact_type": "call",
+              "path": "src/device.cpp",
+              "start_line": 8,
+              "end_line": 8,
+              "confidence": "high",
+              "source": "semantic_cpp_lightweight",
+              "subject": "start_device",
+              "predicate": "calls",
+              "object": "init_device",
+              "caller": "start_device",
+              "callee": "init_device",
+              "call_kind": "direct",
+              "payload": {
+                "resolution_status": "resolved",
+                "argument_count": 0,
+                "argument_expressions": [],
+                "argument_type_hints": [],
+                "candidate_symbol_ids": [
+                  "sym_d8eb3c1528937380"
+                ],
+                "candidate_qualified_names": [
+                  "init_device"
+                ],
+                "callee_symbol_id": "sym_d8eb3c1528937380",
+                "callee_qualified_name": "init_device",
+                "callee_signature": "",
+                "caller_qualified_name": "start_device",
+                "caller_symbol_id": "sym_e9335c9331d359c9",
+                "semantic_phase": "phase3",
+                "build_status": "active",
+                "build_status_precision": "line_preprocessor_model",
+                "tu_context": {
+                  "kind": "translation_unit",
+                  "source": "src/device.cpp",
+                  "target_profile": "default",
+                  "compile_commands": true,
+                  "compile_commands_entry": true,
+                  "precision": "translation_unit",
+                  "included_headers": [
+                    "include/device.h"
+                  ]
+                },
+                "local_resolution_status": "resolved",
+                "global_candidate_qualified_names": [
+                  "init_device"
+                ],
+                "global_candidate_symbol_ids": [
+                  "sym_ddf7b97b9d0b9b7d",
+                  "sym_d8eb3c1528937380"
+                ],
+                "resolution_scope": "translation_unit",
+                "callee_definition_path": "src/device.cpp",
+                "callee_definition_line": 3,
+                "cross_tu": false
+              }
+            }
+          ]
+        }
+      },
+      "elapsed_ms": 8
+    },
+    {
+      "name": "read_file_range",
+      "arguments": {
+        "path": "src/device.cpp",
+        "start_line": 1,
+        "end_line": 12
+      },
+      "response": {
+        "is_error": false,
+        "content": {
+          "path": "src/device.cpp",
+          "start_line": 1,
+          "end_line": 9,
+          "text": "1: #include \"device.h\"\n2: \n3: void init_device() {\n4:     // initialize device\n5: }\n6: \n7: void start_device() {\n8:     init_device();\n9: }"
+        }
+      },
+      "elapsed_ms": 4
+    },
+    {
+      "name": "collect_evidence",
+      "arguments": {
+        "question": "init_device はどこから呼ばれる？",
+        "mode": "callers"
+      },
+      "response": {
+        "is_error": false,
+        "content": {
+          "schema_version": "evidence_bundle.v1",
+          "question": "init_device はどこから呼ばれる？",
+          "interpreted_intent": "callers",
+          "answerability": "answerable",
+          "facts": [
+            {
+              "fact_type": "call",
+              "path": "src/device.cpp",
+              "start_line": 8,
+              "end_line": 8,
+              "confidence": "high",
+              "source": "semantic_cpp_lightweight",
+              "subject": "start_device",
+              "predicate": "calls",
+              "object": "init_device",
+              "caller": "start_device",
+              "callee": "init_device",
+              "call_kind": "direct",
+              "payload": {
+                "resolution_status": "resolved",
+                "argument_count": 0,
+                "argument_expressions": [],
+                "argument_type_hints": [],
+                "candidate_symbol_ids": [
+                  "sym_d8eb3c1528937380"
+                ],
+                "candidate_qualified_names": [
+                  "init_device"
+                ],
+                "callee_symbol_id": "sym_d8eb3c1528937380",
+                "callee_qualified_name": "init_device",
+                "callee_signature": "",
+                "caller_qualified_name": "start_device",
+                "caller_symbol_id": "sym_e9335c9331d359c9",
+                "semantic_phase": "phase3",
+                "build_status": "active",
+                "build_status_precision": "line_preprocessor_model",
+                "tu_context": {
+                  "kind": "translation_unit",
+                  "source": "src/device.cpp",
+                  "target_profile": "default",
+                  "compile_commands": true,
+                  "compile_commands_entry": true,
+                  "precision": "translation_unit",
+                  "included_headers": [
+                    "include/device.h"
+                  ]
+                },
+                "local_resolution_status": "resolved",
+                "global_candidate_qualified_names": [
+                  "init_device"
+                ],
+                "global_candidate_symbol_ids": [
+                  "sym_ddf7b97b9d0b9b7d",
+                  "sym_d8eb3c1528937380"
+                ],
+                "resolution_scope": "translation_unit",
+                "callee_definition_path": "src/device.cpp",
+                "callee_definition_line": 3,
+                "cross_tu": false
+              }
+            },
+            {
+              "fact_type": "relation",
+              "path": "include/device.h",
+              "start_line": 3,
+              "end_line": 3,
+              "confidence": "medium",
+              "source": "cross_tu_symbol_table",
+              "subject": "init_device()",
+              "predicate": "declared_symbol_resolves_to_definition",
+              "object": "init_device()",
+              "payload": {
+                "relation_kind": "cross_tu_declaration_definition_binding",
+                "symbol_id": "sym_ddf7b97b9d0b9b7d",
+                "definition_symbol_id": "sym_d8eb3c1528937380",
+                "definition_path": "src/device.cpp",
+                "definition_line": 3,
+                "resolution_scope": "cross_translation_unit",
+                "semantic_phase": "phase3_cross_tu"
+              }
+            }
+          ],
+          "support_level": "medium",
+          "quality_profile": {
+            "support_level": "medium",
+            "source_coverage_status": "not_tracked",
+            "semantic_resolution_status": "resolved",
+            "build_status": "active",
+            "target_profile": "default",
+            "execution_context": "not_tracked"
+          }
+        }
+      },
+      "elapsed_ms": 23
+    }
+  ],
+  "failed_tools": [],
+  "elapsed_ms": 1295
+}

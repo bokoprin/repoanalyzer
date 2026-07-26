@@ -1,0 +1,18 @@
+{
+  "schema_version": "repoanalyzer_llm_connectivity.v1",
+  "ok": true,
+  "model_id": "qwen3.6:27b_ud-q4_k_xl",
+  "models": {
+    "http_status": 200,
+    "elapsed_ms": 58,
+    "count": 6,
+    "exact_match": true
+  },
+  "chat": {
+    "http_status": 200,
+    "elapsed_ms": 1660,
+    "model_id": "qwen3.6:27b_ud-q4_k_xl",
+    "finish_reason": "length"
+  },
+  "connection_source": "qwen_settings"
+}

@@ -20,8 +20,10 @@ pip install -e ".[dev,mcp]"
 ## 2. Clone TinyUSB
 
 ```powershell
-cd C:\Users\bokop\OneDrive\デスクトップ
-git clone https://github.com/hathach/tinyusb.git
+$WorkspaceRoot = "C:\path\to\workspace"
+$RepoAnalyzerRoot = Join-Path $WorkspaceRoot "repoanalyzer"
+$TinyUsbRoot = Join-Path $WorkspaceRoot "tinyusb"
+git clone https://github.com/hathach/tinyusb.git $TinyUsbRoot
 ```
 
 ## 3. Build a TinyUSB index for MCP
@@ -29,9 +31,9 @@ git clone https://github.com/hathach/tinyusb.git
 From the repoanalyzer checkout:
 
 ```powershell
-cd C:\Users\bokop\OneDrive\デスクトップ\repoanalyzer
+Set-Location $RepoAnalyzerRoot
 .\.venv\Scripts\Activate.ps1
-python -m repoanalyzer.cli tinyusb-upstream-index C:\Users\bokop\OneDrive\デスクトップ\tinyusb --profile tinyusb_upstream_device_cdc_msc
+python -m repoanalyzer.cli tinyusb-upstream-index $TinyUsbRoot --profile tinyusb_upstream_device_cdc_msc
 ```
 
 The command prepares `.repoanalyzer-smoke/` inside the TinyUSB checkout, runs a full ingest with the selected profile, and prints the MCP server command to use.
@@ -39,7 +41,7 @@ The command prepares `.repoanalyzer-smoke/` inside the TinyUSB checkout, runs a 
 ## 4. Start the MCP server manually
 
 ```powershell
-python -m repoanalyzer.mcp.server --repo C:\Users\bokop\OneDrive\デスクトップ\tinyusb
+python -m repoanalyzer.mcp.server --repo $TinyUsbRoot
 ```
 
 Keep this process running while the LLM client is connected.

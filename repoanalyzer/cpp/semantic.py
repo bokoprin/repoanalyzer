@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import re
 from dataclasses import dataclass, field, replace
-from typing import Any, Iterable
+from typing import Any, Iterable, cast
 
 from repoanalyzer.core.models import CodeFact
 
@@ -74,7 +74,10 @@ class FunctionInfo:
     @property
     def symbol_id(self) -> str:
         raw = "|".join([self.kind, self.qualified_name, self.signature, self.path, str(self.start_line)])
-        return "sym_" + hashlib.sha1(raw.encode("utf-8", errors="replace")).hexdigest()[:16]
+        return "sym_" + hashlib.sha1(
+            raw.encode("utf-8", errors="replace"),
+            usedforsecurity=False,
+        ).hexdigest()[:16]
 
 
 @dataclass(frozen=True)
@@ -347,7 +350,10 @@ def _type_and_inheritance_facts(path: str, scopes: list[Scope]) -> tuple[list[Co
         if scope.kind not in {"class", "struct"}:
             continue
         namespace = _namespace_for_scope(scopes, scope.start_line)
-        symbol_id = "type_" + hashlib.sha1(f"{scope.kind}|{scope.qualified_name}|{path}|{scope.start_line}".encode()).hexdigest()[:16]
+        symbol_id = "type_" + hashlib.sha1(
+            f"{scope.kind}|{scope.qualified_name}|{path}|{scope.start_line}".encode(),
+            usedforsecurity=False,
+        ).hexdigest()[:16]
         type_facts.append(
             CodeFact(
                 fact_type="type",
@@ -1540,8 +1546,8 @@ def _make_member_call(path: str, lineno: int, caller: FunctionInfo, recv: str, m
                 "argument_count": len(args),
             }
             return _make_call_fact(path, lineno, caller, method, "member_unresolved", confidence="low", payload=payload)
-    assert binding is not None and binding.type_name is not None
-    owner = binding.type_name
+    binding = cast(Binding, binding)
+    owner = cast(str, binding.type_name)
     candidates = [s for s in symbols if s.owner_type == owner and s.name == method]
     resolved, status, unknown = _resolve_overload(candidates, args)
     virtual_candidates = _virtual_candidates(owner, method, symbols, model)

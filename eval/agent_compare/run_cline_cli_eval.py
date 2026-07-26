@@ -414,7 +414,8 @@ def normalize_answer(case: dict[str, str], obj: dict[str, Any], trace: list[dict
     obj.setdefault("known_limitations", [])
     obj.setdefault("repoanalyzer_fix_suggestions", [])
     obj.setdefault("agent_notes", "")
-    existing_self_check = obj.get("self_check") if isinstance(obj.get("self_check"), dict) else {}
+    raw_self_check = obj.get("self_check")
+    existing_self_check: dict[str, Any] = raw_self_check if isinstance(raw_self_check, dict) else {}
     runner_self_check = build_runner_self_check(case, obj, trace)
     obj["self_check"] = {**existing_self_check, **runner_self_check}
     return obj

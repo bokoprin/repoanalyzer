@@ -1,0 +1,423 @@
+{
+  "schema_version": "repoanalyzer_external_smoke.v1",
+  "ok": true,
+  "scenario_id": "inih_ini_parse_definition_and_callee",
+  "repository": {
+    "url": "https://github.com/benhoyt/inih.git",
+    "commit_sha": "577ae2dee1f0d9c2d11c7f10375c1715f3d6940c",
+    "license": "New BSD"
+  },
+  "ingest": {
+    "status": "indexed",
+    "mode": "full",
+    "files": 3,
+    "facts": 312
+  },
+  "index_status": {
+    "status": "clean",
+    "clean": true,
+    "indexed_files": 3,
+    "current_files": 3
+  },
+  "e2e": {
+    "schema_version": "repoanalyzer_qwen_mcp_e2e.v1",
+    "ok": true,
+    "question": "Use repoanalyzer MCP tools to answer this about the pinned inih repository: Which repository-relative file defines ini_parse, and which repository function does ini_parse directly call before it returns? Cite the exact source lines. Do not answer until you have called repo_status, find_definitions, find_callees, and read_file_range.",
+    "final_answer": "Based on the tool output:\n\n**File defining `ini_parse`:** `ini.c`, lines 279–290.\n\n**Repository function called before return:** `ini_parse` directly calls the repository function **`ini_parse_file`** at **line 287** (`error = ini_parse_file(file, handler, user);`). This is the last repository-defined function called before `ini_parse` returns at line 289.\n\nThe full function body (ini.c, lines 279–290):\n```c\n279: int ini_parse(const char* filename, ini_handler handler, void* user)\n280: {\n281:     FILE* file;\n282:     int error;\n283: \n284:     file = fopen(filename, \"r\");\n285:     if (!file)\n286:         return -1;\n287:     error = ini_parse_file(file, handler, user);\n288:     fclose(file);\n289:     return error;\n290: }\n```\n\nNote: `fopen` (line 284) and `fclose` (line 288) are standard library functions, not repository-defined functions. The only repository function called by `ini_parse` is `ini_parse_file` at line 287.",
+    "failure": null,
+    "llm_history": [
+      {
+        "turn": 1,
+        "http_status": 200,
+        "elapsed_ms": 3918,
+        "model_id": "qwen3.6:27b_ud-q4_k_xl",
+        "finish_reason": "tool_calls",
+        "tool_call_count": 3
+      },
+      {
+        "turn": 2,
+        "http_status": 200,
+        "elapsed_ms": 4578,
+        "model_id": "qwen3.6:27b_ud-q4_k_xl",
+        "finish_reason": "tool_calls",
+        "tool_call_count": 1
+      },
+      {
+        "turn": 3,
+        "http_status": 200,
+        "elapsed_ms": 13834,
+        "model_id": "qwen3.6:27b_ud-q4_k_xl",
+        "finish_reason": "stop",
+        "tool_call_count": 0
+      }
+    ],
+    "tool_history": [
+      {
+        "turn": 1,
+        "tool_call_id": "DLdls7e0zh99b8OO4bY1BKPw8VToPOkt",
+        "name": "repo_status",
+        "arguments": {},
+        "response": {
+          "is_error": false,
+          "content": {
+            "repo": "<external_repo>",
+            "db_path": "<external_repo>\\.repoanalyzer-index\\index.sqlite3",
+            "status": "clean",
+            "clean": true,
+            "indexed_files": 3,
+            "current_files": 3,
+            "stale": [],
+            "missing": [],
+            "new": [],
+            "metadata": {
+              "build_context_signature": {
+                "compile_commands": "<external_repo>\\compile_commands.json",
+                "compile_commands_sha256": "c7407091b30f0df9e2a32fe090446a96c0db81f897b061cc71d152593dce15e3",
+                "config_path": null,
+                "config_sha256": null,
+                "configured_macros": [],
+                "exclude_patterns": [],
+                "include_dirs": [],
+                "source_files": [
+                  "ini.c"
+                ],
+                "target_profile": {}
+              },
+              "compile_commands": "<external_repo>\\compile_commands.json",
+              "config_path": null,
+              "db_path": "<external_repo>\\.repoanalyzer-index\\index.sqlite3",
+              "exclude_patterns": [],
+              "fact_count": 312,
+              "indexed_file_count": 3,
+              "ingest_finished_at": "2026-07-26T12:56:48+00:00",
+              "ingest_mode": "full_reset",
+              "ingest_started_at": "2026-07-26T12:56:48+00:00",
+              "repo_root": "<external_repo>",
+              "schema_version": 2,
+              "target_profile": {},
+              "tool_version": "0.2.0"
+            }
+          }
+        },
+        "elapsed_ms": 17
+      },
+      {
+        "turn": 1,
+        "tool_call_id": "JkHMOFoRgD2n0rRGjb3UPG53dniLaLr9",
+        "name": "find_definitions",
+        "arguments": {
+          "symbol": "ini_parse"
+        },
+        "response": {
+          "is_error": false,
+          "content": {
+            "result": [
+              {
+                "fact_type": "symbol",
+                "path": "ini.c",
+                "start_line": 279,
+                "end_line": 290,
+                "confidence": "high",
+                "source": "semantic_cpp_lightweight",
+                "subject": "ini_parse(const char*, ini_handler, void*)",
+                "predicate": "definition",
+                "object": "function",
+                "symbol": "ini_parse",
+                "qualified_name": "ini_parse",
+                "kind": "function",
+                "payload": {
+                  "symbol_id": "sym_ccc08d732f72760a",
+                  "signature": "const char*, ini_handler, void*",
+                  "qualified_signature": "ini_parse(const char*, ini_handler, void*)",
+                  "return_type": "int",
+                  "owner_type": null,
+                  "namespace": null,
+                  "scope": null,
+                  "qualifiers": [],
+                  "parameters": [
+                    {
+                      "name": "filename",
+                      "type": "const char*"
+                    },
+                    {
+                      "name": "handler",
+                      "type": "ini_handler"
+                    },
+                    {
+                      "name": "user",
+                      "type": "void*"
+                    }
+                  ],
+                  "argument_count": 3,
+                  "declaration_or_definition": "definition",
+                  "semantic_phase": "phase3",
+                  "build_status": "active",
+                  "build_status_precision": "line_preprocessor_model",
+                  "tu_context": {
+                    "kind": "translation_unit",
+                    "source": "ini.c",
+                    "target_profile": "default",
+                    "compile_commands": true,
+                    "compile_commands_entry": true,
+                    "precision": "translation_unit",
+                    "included_headers": [
+                      "ini.h"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "elapsed_ms": 7
+      },
+      {
+        "turn": 1,
+        "tool_call_id": "R6t2BpfTIyotkF1DO5Chg4FjQtrVUgyQ",
+        "name": "find_callees",
+        "arguments": {
+          "symbol": "ini_parse"
+        },
+        "response": {
+          "is_error": false,
+          "content": {
+            "result": [
+              {
+                "fact_type": "call",
+                "path": "ini.c",
+                "start_line": 284,
+                "end_line": 284,
+                "confidence": "low",
+                "source": "semantic_cpp_lightweight",
+                "subject": "ini_parse",
+                "predicate": "calls",
+                "object": "fopen",
+                "caller": "ini_parse",
+                "callee": "fopen",
+                "call_kind": "direct",
+                "payload": {
+                  "resolution_status": "unresolved",
+                  "argument_count": 2,
+                  "argument_expressions": [
+                    "filename",
+                    "\" \""
+                  ],
+                  "argument_type_hints": [
+                    "string"
+                  ],
+                  "candidate_symbol_ids": [],
+                  "candidate_qualified_names": [],
+                  "caller_qualified_name": "ini_parse",
+                  "caller_symbol_id": "sym_ccc08d732f72760a",
+                  "semantic_phase": "phase3",
+                  "build_status": "active",
+                  "build_status_precision": "line_preprocessor_model",
+                  "tu_context": {
+                    "kind": "translation_unit",
+                    "source": "ini.c",
+                    "target_profile": "default",
+                    "compile_commands": true,
+                    "compile_commands_entry": true,
+                    "precision": "translation_unit",
+                    "included_headers": [
+                      "ini.h"
+                    ]
+                  }
+                }
+              },
+              {
+                "fact_type": "call",
+                "path": "ini.c",
+                "start_line": 287,
+                "end_line": 287,
+                "confidence": "high",
+                "source": "semantic_cpp_lightweight",
+                "subject": "ini_parse",
+                "predicate": "calls",
+                "object": "ini_parse_file",
+                "caller": "ini_parse",
+                "callee": "ini_parse_file",
+                "call_kind": "direct",
+                "payload": {
+                  "resolution_status": "resolved",
+                  "argument_count": 3,
+                  "argument_expressions": [
+                    "file",
+                    "handler",
+                    "user"
+                  ],
+                  "argument_type_hints": [],
+                  "candidate_symbol_ids": [
+                    "sym_094da42476bcd634"
+                  ],
+                  "candidate_qualified_names": [
+                    "ini_parse_file"
+                  ],
+                  "callee_symbol_id": "sym_094da42476bcd634",
+                  "callee_qualified_name": "ini_parse_file",
+                  "callee_signature": "FILE*, ini_handler, void*",
+                  "caller_qualified_name": "ini_parse",
+                  "caller_symbol_id": "sym_ccc08d732f72760a",
+                  "semantic_phase": "phase3",
+                  "build_status": "active",
+                  "build_status_precision": "line_preprocessor_model",
+                  "tu_context": {
+                    "kind": "translation_unit",
+                    "source": "ini.c",
+                    "target_profile": "default",
+                    "compile_commands": true,
+                    "compile_commands_entry": true,
+                    "precision": "translation_unit",
+                    "included_headers": [
+                      "ini.h"
+                    ]
+                  },
+                  "local_resolution_status": "resolved",
+                  "global_candidate_qualified_names": [
+                    "ini_parse_file"
+                  ],
+                  "global_candidate_symbol_ids": [
+                    "sym_094da42476bcd634",
+                    "sym_d86a484b0e917af5"
+                  ],
+                  "resolution_scope": "translation_unit",
+                  "callee_definition_path": "ini.c",
+                  "callee_definition_line": 273,
+                  "cross_tu": false
+                }
+              },
+              {
+                "fact_type": "call",
+                "path": "ini.c",
+                "start_line": 288,
+                "end_line": 288,
+                "confidence": "low",
+                "source": "semantic_cpp_lightweight",
+                "subject": "ini_parse",
+                "predicate": "calls",
+                "object": "fclose",
+                "caller": "ini_parse",
+                "callee": "fclose",
+                "call_kind": "direct",
+                "payload": {
+                  "resolution_status": "unresolved",
+                  "argument_count": 1,
+                  "argument_expressions": [
+                    "file"
+                  ],
+                  "argument_type_hints": [],
+                  "candidate_symbol_ids": [],
+                  "candidate_qualified_names": [],
+                  "caller_qualified_name": "ini_parse",
+                  "caller_symbol_id": "sym_ccc08d732f72760a",
+                  "semantic_phase": "phase3",
+                  "build_status": "active",
+                  "build_status_precision": "line_preprocessor_model",
+                  "tu_context": {
+                    "kind": "translation_unit",
+                    "source": "ini.c",
+                    "target_profile": "default",
+                    "compile_commands": true,
+                    "compile_commands_entry": true,
+                    "precision": "translation_unit",
+                    "included_headers": [
+                      "ini.h"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "elapsed_ms": 7
+      },
+      {
+        "turn": 2,
+        "tool_call_id": "ub9aal2ixgjaCcsOmpU8ugDq7EHVisU9",
+        "name": "read_file_range",
+        "arguments": {
+          "path": "ini.c",
+          "start_line": 279,
+          "end_line": 290
+        },
+        "response": {
+          "is_error": false,
+          "content": {
+            "path": "ini.c",
+            "start_line": 279,
+            "end_line": 290,
+            "text": "279: int ini_parse(const char* filename, ini_handler handler, void* user)\n280: {\n281:     FILE* file;\n282:     int error;\n283: \n284:     file = fopen(filename, \"r\");\n285:     if (!file)\n286:         return -1;\n287:     error = ini_parse_file(file, handler, user);\n288:     fclose(file);\n289:     return error;\n290: }"
+          }
+        },
+        "elapsed_ms": 4
+      }
+    ],
+    "tool_call_count": 4,
+    "tool_error_count": 0,
+    "mcp_initialize": {
+      "protocol_version": "2025-11-25",
+      "server_name": "repoanalyzer",
+      "tool_count": 24
+    },
+    "available_tools": [
+      "server_info",
+      "repo_status",
+      "query_diagnostics",
+      "read_file_range",
+      "find_definitions",
+      "find_definitions_page",
+      "find_references",
+      "find_references_page",
+      "find_callers",
+      "find_callers_page",
+      "find_callees",
+      "find_callees_page",
+      "collect_evidence",
+      "verify_claim",
+      "verify_claims",
+      "extract_claims",
+      "verify_text",
+      "preflight",
+      "plan_question",
+      "verify_answer",
+      "answer_contract",
+      "workflow_run",
+      "workflow_history",
+      "real_repo_eval"
+    ],
+    "models_check": {
+      "http_status": 200,
+      "elapsed_ms": 43,
+      "models_count": 6,
+      "exact_match": true
+    },
+    "elapsed_ms": 23389,
+    "model_id": "qwen3.6:27b_ud-q4_k_xl",
+    "connection_source": "qwen_settings"
+  },
+  "validation": {
+    "ok": true,
+    "missing_answer_strings": [],
+    "missing_tools": [],
+    "evidence_strings_found": [
+      "ini.c",
+      "ini_parse",
+      "ini_parse_file"
+    ],
+    "source_checks": [
+      {
+        "path": "ini.c",
+        "anchor": "int ini_parse(const char* filename, ini_handler handler, void* user)",
+        "matched": true
+      },
+      {
+        "path": "ini.c",
+        "anchor": "error = ini_parse_file(file, handler, user);",
+        "matched": true
+      }
+    ]
+  },
+  "elapsed_ms": 23752,
+  "phase": "preparation",
+  "completion_claimed": false
+}

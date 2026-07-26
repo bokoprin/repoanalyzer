@@ -1,0 +1,43 @@
+{
+  "schema_version": "repoanalyzer_external_scenario.v1",
+  "scenario_id": "inih_ini_parse_definition_and_callee",
+  "repository": {
+    "url": "https://github.com/benhoyt/inih.git",
+    "commit_sha": "577ae2dee1f0d9c2d11c7f10375c1715f3d6940c",
+    "license": "New BSD",
+    "license_file": "LICENSE.txt",
+    "checkout_directory": "inih"
+  },
+  "compile_commands": [
+    {
+      "directory": ".",
+      "command": "cc -I. -c ini.c",
+      "file": "ini.c"
+    }
+  ],
+  "evaluation": {
+    "model_id": "qwen3.6:27b_ud-q4_k_xl",
+    "question": "Use repoanalyzer MCP tools to answer this about the pinned inih repository: Which repository-relative file defines ini_parse, and which repository function does ini_parse directly call before it returns? Cite the exact source lines. Do not answer until you have called repo_status, find_definitions, find_callees, and read_file_range.",
+    "required_answer_strings": [
+      "ini.c",
+      "ini_parse",
+      "ini_parse_file"
+    ],
+    "required_tools": [
+      "repo_status",
+      "find_definitions",
+      "find_callees",
+      "read_file_range"
+    ],
+    "source_anchors": [
+      {
+        "path": "ini.c",
+        "contains": "int ini_parse(const char* filename, ini_handler handler, void* user)"
+      },
+      {
+        "path": "ini.c",
+        "contains": "error = ini_parse_file(file, handler, user);"
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "model_id": "${REPOANALYZER_LLM_MODEL}",
+  "connection": {
+    "base_url": "${REPOANALYZER_LLM_BASE_URL}",
+    "api_key": "${REPOANALYZER_LLM_API_KEY}"
+  },
+  "preferred_source": "Use C:\\Users\\<user>\\.qwen\\settings.json instead of copying connection values into this file."
+}
