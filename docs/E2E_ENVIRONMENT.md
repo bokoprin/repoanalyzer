@@ -11,6 +11,9 @@
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e ".[dev,mcp]"
+.\.venv\Scripts\python.exe -m ruff check repoanalyzer tests scripts
+.\.venv\Scripts\python.exe -m mypy repoanalyzer tests scripts
+.\.venv\Scripts\python.exe -m pytest -q -m "not upstream"
 ```
 
 - Python 3.11以上
