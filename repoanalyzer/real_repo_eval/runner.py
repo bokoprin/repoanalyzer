@@ -73,9 +73,9 @@ def run_real_repo_eval(repo: str | Path, case_file: str | Path) -> RealRepoEvalR
     for scenario in case.scenarios:
         scenario_results.append(_run_scenario(root, scenario, category_counts))
 
-    for scenario in scenario_results:
-        if not scenario.ok:
-            failures.append(f"scenario {scenario.id} failed")
+    for scenario_result in scenario_results:
+        if not scenario_result.ok:
+            failures.append(f"scenario {scenario_result.id} failed")
 
     metrics["scenario_count"] = len(scenario_results)
     metrics["passed_scenarios"] = sum(1 for scenario in scenario_results if scenario.ok)

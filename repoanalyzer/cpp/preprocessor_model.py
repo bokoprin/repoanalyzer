@@ -4,12 +4,12 @@ import re
 from dataclasses import dataclass, replace
 from typing import Mapping
 
+from .macro_eval import GuardEvaluation, eval_guard_detailed
+
 _IF_RE = re.compile(r"^\s*#\s*(?P<directive>ifdef|ifndef|if)\s+(?P<expr>.+?)\s*(?://.*)?$")
 _ELIF_RE = re.compile(r"^\s*#\s*elif\s+(?P<expr>.+?)\s*(?://.*)?$")
 _ELSE_RE = re.compile(r"^\s*#\s*else\b")
 _ENDIF_RE = re.compile(r"^\s*#\s*endif\b")
-
-from .macro_eval import GuardEvaluation, eval_guard, eval_guard_detailed
 
 
 @dataclass(frozen=True)

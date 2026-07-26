@@ -9,6 +9,7 @@ from typer.testing import CliRunner
 from repoanalyzer.cli import app
 from repoanalyzer.real_repo_eval.runner import run_real_repo_eval
 from repoanalyzer.snapshot.generator import generate_snapshot
+from repoanalyzer.snapshot.traceability import generate_traceability_report
 
 FIXTURE = Path(__file__).parent / "fixtures_cpp" / "phase7_sakura_cross_trace_snapshot"
 MANIFEST = FIXTURE / "source_fetch_manifest.yaml"
@@ -208,9 +209,6 @@ def test_phase7_snapshot_generator_rejects_upstream_sha_mismatch(tmp_path: Path)
 
     assert not report.ok
     assert any("upstream sha256 mismatch" in error for error in report.errors)
-
-from repoanalyzer.snapshot.traceability import generate_traceability_report
-
 
 def test_phase7_snapshot_traceability_report_links_compact_and_upstream_sources(tmp_path: Path) -> None:
     source_root = tmp_path / "sources"

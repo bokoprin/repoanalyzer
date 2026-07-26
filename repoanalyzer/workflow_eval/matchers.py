@@ -56,11 +56,11 @@ def evaluate_trace(trace: WorkflowTrace, expected: dict[str, Any]) -> dict[str, 
             failures.append(f"Expected warning containing {expected_warning!r}; got {trace.warnings!r}")
 
     for expected_violation in expected.get("policy_violations_contain", []) or []:
-        violations = []
+        violations: list[str] = []
         if trace.answer_verification:
-            violations.extend(v.get("violation_type") if isinstance(v, dict) else getattr(v, "violation_type", "") for v in trace.answer_verification.policy_violations)
+            violations.extend(str(v.get("violation_type") or "") if isinstance(v, dict) else str(getattr(v, "violation_type", "") or "") for v in trace.answer_verification.policy_violations)
         if trace.answer_contract:
-            violations.extend(v.get("violation_type") if isinstance(v, dict) else getattr(v, "violation_type", "") for v in trace.answer_contract.policy_violations)
+            violations.extend(str(v.get("violation_type") or "") if isinstance(v, dict) else str(getattr(v, "violation_type", "") or "") for v in trace.answer_contract.policy_violations)
         if expected_violation not in violations:
             failures.append(f"Expected policy violation {expected_violation!r}; got {violations!r}")
 

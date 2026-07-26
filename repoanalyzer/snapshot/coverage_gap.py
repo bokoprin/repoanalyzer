@@ -187,7 +187,6 @@ def generate_coverage_gap_report(
         upstream_output_root=upstream_output_root,
         write_report=False,
     )
-    trace_payload = traceability.to_dict()
     if not traceability.ok:
         errors.extend(traceability.errors)
     warnings.extend(traceability.warnings)

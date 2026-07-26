@@ -2,13 +2,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from repoanalyzer.claim_eval.runner import run_claim_eval
 from repoanalyzer.cpp.ingest import ingest_repo
+from repoanalyzer.core.paths import index_db_path
+from repoanalyzer.evidence.claim_extraction import extract_claims, verify_claim_text
+from repoanalyzer.evidence.claims import Claim
 from repoanalyzer.evidence.collect import collect_evidence
-from repoanalyzer.evidence.claim_extraction import verify_claim_text
+from repoanalyzer.evidence.verify import verify_claim, verify_claims
 from repoanalyzer.evidence_eval.runner import run_eval
 from repoanalyzer.query import find_callers, find_definitions
 from repoanalyzer.store.sqlite import SQLiteStore
-from repoanalyzer.core.paths import index_db_path
 
 
 FIXTURE = Path(__file__).parent / "fixtures_cpp" / "basic_call"
@@ -863,8 +866,9 @@ def test_phase3_resolves_cross_tu_direct_member_and_overloaded_calls() -> None:
 
     overloaded_callers = find_callers(SEMANTIC_CROSS_TU_FIXTURE, "app::overloaded")
     resolved_signatures = sorted(
-        f.payload.get("callee_signature")
+        signature
         for f in overloaded_callers
+        if isinstance((signature := f.payload.get("callee_signature")), str)
         if f.caller == "app::Device::start" and f.payload.get("resolution_scope") == "cross_translation_unit"
     )
     assert resolved_signatures == ["const char*", "int"]
@@ -966,10 +970,6 @@ def test_evidence_eval_phase3_mvp_integration_cases_pass() -> None:
     result = run_eval(SEMANTIC_PHASE3_MVP_FIXTURE, SEMANTIC_PHASE3_MVP_FIXTURE / "cases.yaml")
     assert result.failed == 0, result.to_dict()
 
-from repoanalyzer.evidence.claims import Claim
-from repoanalyzer.evidence.verify import verify_claim, verify_claims
-from repoanalyzer.claim_eval.runner import run_claim_eval
-
 SEMANTIC_CROSS_TU_FIXTURE = Path(__file__).parent / "fixtures_cpp" / "semantic_cross_tu_resolution"
 
 
@@ -1040,9 +1040,6 @@ def test_phase4_verify_claims_bundle_and_claim_eval_cases_pass() -> None:
     ingest_repo(FIXTURE, reset=True)
     basic_result = run_claim_eval(FIXTURE, FIXTURE / "claim_cases.yaml")
     assert basic_result.failed == 0, basic_result.to_dict()
-
-from repoanalyzer.evidence.claim_extraction import extract_claims, verify_claim_text
-
 
 def test_phase4_extracts_structured_claims_from_natural_language_text() -> None:
     text = (

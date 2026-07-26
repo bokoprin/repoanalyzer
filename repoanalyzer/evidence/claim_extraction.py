@@ -750,7 +750,7 @@ def _overlaps(span: range, occupied: Iterable[range]) -> bool:
 def _claim_from_match(pattern: _ClaimPattern, match: re.Match[str], text: str) -> Claim | None:
     subject = _clean_endpoint(match.groupdict().get("subject"))
     obj = _clean_endpoint(match.groupdict().get("object"))
-    payload = {
+    payload: dict[str, object] = {
         "extraction": {
             "source": "deterministic_natural_language_pattern",
             "pattern_id": pattern.pattern_id,

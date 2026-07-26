@@ -464,7 +464,8 @@ class GlobalSymbolTable:
             return None
         candidates = self.by_qname.get(normalized, [])
         defs = [c for c in candidates if c.declaration_or_definition == "definition"]
-        return (defs or candidates or [None])[0]
+        resolved = defs or candidates
+        return resolved[0] if resolved else None
 
 
 
@@ -717,6 +718,7 @@ def _resolve_semantic_operation_relation_fact(fact: CodeFact, table: GlobalSymbo
 
 def _resolve_command_dispatch_relation_fact(fact: CodeFact, table: GlobalSymbolTable) -> CodeFact:
     payload = dict(fact.payload)
+    obj: str | None = fact.object
     handler = payload.get("handler_qualified_name") or fact.object
     dispatcher = payload.get("dispatcher_qualified_name")
     handler_symbol = table.symbol_for_qname(str(handler) if handler else None)
@@ -733,8 +735,6 @@ def _resolve_command_dispatch_relation_fact(fact: CodeFact, table: GlobalSymbolT
         if normalized_handler:
             payload["handler_qualified_name"] = normalized_handler
             obj = normalized_handler
-        else:
-            obj = fact.object
         payload.setdefault("resolution_status", "unresolved")
     if dispatcher_symbol:
         payload["dispatcher_qualified_name"] = dispatcher_symbol.qualified_name

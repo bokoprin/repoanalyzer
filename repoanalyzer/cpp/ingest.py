@@ -879,13 +879,13 @@ def _fact_line_status(fact: CodeFact, preprocessor: PreprocessorModel) -> LineBu
                     seen.add(key)
         return LineBuildStatus(line=fact.start_line, status="conditional", guard_stack=tuple(guards))
     active_guards: list[ConditionalGuard] = []
-    seen: set[tuple[str, str, int]] = set()
+    active_seen: set[tuple[str, str, int]] = set()
     for status in statuses:
         for guard in status.guard_stack:
             key = (guard.directive, guard.expression, guard.line)
-            if key not in seen:
+            if key not in active_seen:
                 active_guards.append(guard)
-                seen.add(key)
+                active_seen.add(key)
     return LineBuildStatus(line=fact.start_line, status="active", guard_stack=tuple(active_guards))
 
 

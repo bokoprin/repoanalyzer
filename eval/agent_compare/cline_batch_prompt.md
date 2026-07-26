@@ -30,8 +30,8 @@
 ## agent metadata
 
 agent_id: `cline`
-model: `qwen3.5-35b`
-repo target: `C:\shinsuke\app\tinyusb`
+model: `<evaluation-model-id>`
+repo target: `<REPOANALYZER_TINYUSB_REPO>`
 repoanalyzer MCP server: `repoanalyzer-tinyusb`
 
 ## task

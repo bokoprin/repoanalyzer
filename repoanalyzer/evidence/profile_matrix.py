@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict, is_dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 import shutil
 import tempfile
 import time
@@ -22,7 +22,7 @@ def _to_dict(value: Any) -> Any:
     if hasattr(value, "to_dict"):
         return value.to_dict()
     if is_dataclass(value):
-        return {k: _to_dict(v) for k, v in asdict(value).items()}
+        return {k: _to_dict(v) for k, v in asdict(cast(Any, value)).items()}
     if isinstance(value, list):
         return [_to_dict(item) for item in value]
     if isinstance(value, dict):
@@ -535,23 +535,23 @@ def _evaluate_expectations(
             if actual != str(wanted):
                 failures.append(f"{profile_id}: macro {macro} expected {wanted}, got {actual}")
         for target_id, target_expect in (profile_expect.get("targets") or {}).items():
-            target = profile.targets.get(str(target_id))
-            if target is None:
+            profile_target = profile.targets.get(str(target_id))
+            if profile_target is None:
                 failures.append(f"{profile_id}: target {target_id} was not evaluated")
                 continue
-            if "status" in target_expect and target.status != target_expect["status"]:
-                failures.append(f"{profile_id}:{target_id}: status expected {target_expect['status']}, got {target.status}")
-            if "verdict" in target_expect and target.verdict != target_expect["verdict"]:
-                failures.append(f"{profile_id}:{target_id}: verdict expected {target_expect['verdict']}, got {target.verdict}")
+            if "status" in target_expect and profile_target.status != target_expect["status"]:
+                failures.append(f"{profile_id}:{target_id}: status expected {target_expect['status']}, got {profile_target.status}")
+            if "verdict" in target_expect and profile_target.verdict != target_expect["verdict"]:
+                failures.append(f"{profile_id}:{target_id}: verdict expected {target_expect['verdict']}, got {profile_target.verdict}")
     for target_id, target_expect in (expected.get("targets") or {}).items():
-        target = target_summary_by_id.get(str(target_id))
-        if target is None:
+        target_summary = target_summary_by_id.get(str(target_id))
+        if target_summary is None:
             failures.append(f"expected target {target_id!r} was not evaluated")
             continue
-        if "changed" in target_expect and bool(target.changed) is not bool(target_expect["changed"]):
-            failures.append(f"{target_id}: changed expected {target_expect['changed']}, got {target.changed}")
+        if "changed" in target_expect and bool(target_summary.changed) is not bool(target_expect["changed"]):
+            failures.append(f"{target_id}: changed expected {target_expect['changed']}, got {target_summary.changed}")
         for profile_id, wanted_status in (target_expect.get("statuses") or {}).items():
-            actual = target.statuses.get(str(profile_id))
+            actual = target_summary.statuses.get(str(profile_id))
             if actual != str(wanted_status):
                 failures.append(f"{target_id}:{profile_id}: status expected {wanted_status}, got {actual}")
     return failures

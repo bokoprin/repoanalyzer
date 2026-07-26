@@ -11,7 +11,6 @@ from repoanalyzer.evidence.quality_gate import apply_quality_gate_to_verdict
 from repoanalyzer.query._active import active_fact_where
 from repoanalyzer.query._semantic import call_endpoint_matches, name_matches
 from repoanalyzer.query._store import open_store
-from repoanalyzer.query.definitions import find_definitions
 from repoanalyzer.store.status import repo_index_status
 
 
@@ -436,7 +435,6 @@ def _facts_for_build_target(repo: str | Path, target: str) -> list[CodeFact]:
     query = target.split("(", 1)[0]
     suffix = f"%::{query}"
     callish = f"{query}(%"
-    qualified_callish = f"%::{query}(%"
     where = " OR ".join(
         [
             "path=?",
@@ -1586,7 +1584,7 @@ def _verify_tinyusb_driver_dispatch_semantic(repo: str | Path, claim: Claim) -> 
     matched: list[CodeFact] = []
     for fact in facts:
         callbacks = fact.payload.get("callbacks") or {}
-        callback_values = []
+        callback_values: list[object] = []
         if isinstance(callbacks, dict):
             callback_values.extend(callbacks.values())
         values = [

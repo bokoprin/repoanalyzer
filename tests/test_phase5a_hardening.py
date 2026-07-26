@@ -6,11 +6,11 @@ import sys
 from pathlib import Path
 
 from repoanalyzer.cpp.ingest import ingest_repo
+from repoanalyzer.core.paths import index_db_path
 from repoanalyzer.evidence.collect import collect_evidence
-from repoanalyzer.query import find_callers, find_definitions
+from repoanalyzer.query import find_definitions
 from repoanalyzer.store.sqlite import SQLiteStore
 from repoanalyzer.store.status import repo_index_status
-from repoanalyzer.core.paths import index_db_path
 
 
 BASIC_FIXTURE = Path(__file__).parent / "fixtures_cpp" / "basic_call"

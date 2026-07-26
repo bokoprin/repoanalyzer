@@ -4,37 +4,40 @@
 
 ## 前提
 
-repoanalyzerとTinyUSBの環境構築は完了済みとします。
+repoanalyzerとTinyUSBの環境構築は完了済みとします。TinyUSB checkoutは環境変数で指定します。
 
-- repoanalyzer: `C:\shinsuke\app\repoanalyzer_clean`
-- TinyUSB: `C:\shinsuke\app\tinyusb`
-- Python: `C:\shinsuke\app\repoanalyzer_clean\.venv\Scripts\python.exe`
+```powershell
+$env:REPOANALYZER_TINYUSB_REPO = "<path-to-tinyusb-checkout>"
+```
+
+- repoanalyzer: このrepositoryのroot
+- TinyUSB: `$env:REPOANALYZER_TINYUSB_REPO`
+- Python: `.\.venv\Scripts\python.exe`
 - MCP server command:
 
 ```powershell
-C:\shinsuke\app\repoanalyzer_clean\.venv\Scripts\python.exe -m repoanalyzer.mcp.server --repo C:\shinsuke\app\tinyusb
+.\.venv\Scripts\python.exe -m repoanalyzer.mcp.server --repo $env:REPOANALYZER_TINYUSB_REPO
 ```
 
 ## 1. ファイル配置
 
-このkit内のファイルを repoanalyzer repository の以下へ配置するのがおすすめです。
+このkitはrepoanalyzer repositoryの `eval\agent_compare` 配下にあります。
 
 ```text
-C:\shinsuke\app\repoanalyzer_clean\eval\agent_compare\tinyusb_mcp_golden_cases.csv
-C:\shinsuke\app\repoanalyzer_clean\eval\agent_compare\answer_schema.json
-C:\shinsuke\app\repoanalyzer_clean\eval\agent_compare\cline_batch_prompt.md
-C:\shinsuke\app\repoanalyzer_clean\eval\agent_compare\qwen_code_batch_prompt.md
-C:\shinsuke\app\repoanalyzer_clean\eval\agent_compare\evaluation_rubric.md
-C:\shinsuke\app\repoanalyzer_clean\eval\agent_compare\RUNBOOK.md
-C:\shinsuke\app\repoanalyzer_clean\eval\outputs\
+eval\agent_compare\tinyusb_mcp_golden_cases.csv
+eval\agent_compare\answer_schema.json
+eval\agent_compare\cline_batch_prompt.md
+eval\agent_compare\qwen_code_batch_prompt.md
+eval\agent_compare\evaluation_rubric.md
+eval\agent_compare\RUNBOOK.md
+eval\outputs\
 ```
 
 ## 2. index状態確認
 
 ```powershell
-cd C:\shinsuke\app\repoanalyzer_clean
-.\.venv\Scripts\python.exe -m repoanalyzer.cli repo-status C:\shinsuke\app\tinyusb
-.\.venv\Scripts\python.exe -m repoanalyzer.cli query-diagnostics C:\shinsuke\app\tinyusb
+.\.venv\Scripts\python.exe -m repoanalyzer.cli repo-status $env:REPOANALYZER_TINYUSB_REPO
+.\.venv\Scripts\python.exe -m repoanalyzer.cli query-diagnostics $env:REPOANALYZER_TINYUSB_REPO
 ```
 
 `status: clean` であることを確認します。

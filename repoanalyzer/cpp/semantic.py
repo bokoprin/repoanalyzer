@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import re
 from dataclasses import dataclass, field, replace
-from typing import Iterable
+from typing import Any, Iterable
 
 from repoanalyzer.core.models import CodeFact
 
@@ -145,7 +145,6 @@ def analyze_cpp_semantics(path: str, text: str) -> list[CodeFact]:
 
 def build_semantic_model(path: str, text: str) -> SemanticModel:
     masked = mask_comments_and_strings(text)
-    lines = masked.splitlines()
     scopes = _extract_scopes(path, masked)
     type_facts, type_relations = _type_and_inheritance_facts(path, scopes)
     alias_facts, type_aliases = _type_alias_facts(path, masked, scopes)
@@ -235,11 +234,11 @@ def _extract_scopes(path: str, masked: str) -> list[Scope]:
         for m in re.finditer(r"\bnamespace\s+((?:[A-Za-z_]\w*::)*[A-Za-z_]\w*)\s*\{", line):
             raw_scopes.append(("namespace", m.group(1), start_line, _find_block_end(lines, i), ()))
         for m in re.finditer(r"\b(class|struct)\s+([A-Za-z_]\w*)\s*(?::\s*([^\{]+))?\{", line):
-            bases = _parse_bases(m.group(3) or "")
-            raw_scopes.append((m.group(1), m.group(2), start_line, _find_block_end(lines, i), tuple(bases)))
+            parsed_bases = _parse_bases(m.group(3) or "")
+            raw_scopes.append((m.group(1), m.group(2), start_line, _find_block_end(lines, i), tuple(parsed_bases)))
 
     scopes: list[Scope] = []
-    for kind, name, start, end, bases in sorted(raw_scopes, key=lambda x: (x[2], -(x[3] - x[2]))):
+    for kind, name, start, end, base_names in sorted(raw_scopes, key=lambda x: (x[2], -(x[3] - x[2]))):
         parent = _innermost_scope_at(scopes, start, exclude_kinds={"function"})
         if kind == "namespace" and "::" in name:
             qname = name
@@ -247,7 +246,7 @@ def _extract_scopes(path: str, masked: str) -> list[Scope]:
             qname = f"{parent.qualified_name}::{name}"
         else:
             qname = name
-        scopes.append(Scope(kind=kind, name=name.split("::")[-1], qualified_name=qname, start_line=start, end_line=end, bases=bases))
+        scopes.append(Scope(kind=kind, name=name.split("::")[-1], qualified_name=qname, start_line=start, end_line=end, bases=base_names))
     return scopes
 
 
@@ -487,7 +486,6 @@ def _namespace_for_scope(scopes: Iterable[Scope], line: int) -> str | None:
 
 def _extract_functions(path: str, original_text: str, masked: str, scopes: list[Scope]) -> list[FunctionInfo]:
     lines = masked.splitlines()
-    original_lines = original_text.splitlines()
     functions: list[FunctionInfo] = []
     covered_body_lines: set[int] = set()
     i = 0
@@ -1156,9 +1154,9 @@ def _field_type_for(owner_type: str | None, field_name: str, model: SemanticMode
     owner = _strip_pointer_suffix(_normalize_alias_type(owner_type, model.type_aliases) if owner_type else owner_type)
     if not owner:
         return None, False
-    for field in model.fields:
-        if field.owner_type == owner and field.name == field_name:
-            return field.type_name, field.is_pointer
+    for field_info in model.fields:
+        if field_info.owner_type == owner and field_info.name == field_name:
+            return field_info.type_name, field_info.is_pointer
     return None, False
 
 
@@ -1542,6 +1540,7 @@ def _make_member_call(path: str, lineno: int, caller: FunctionInfo, recv: str, m
                 "argument_count": len(args),
             }
             return _make_call_fact(path, lineno, caller, method, "member_unresolved", confidence="low", payload=payload)
+    assert binding is not None and binding.type_name is not None
     owner = binding.type_name
     candidates = [s for s in symbols if s.owner_type == owner and s.name == method]
     resolved, status, unknown = _resolve_overload(candidates, args)
@@ -2167,7 +2166,7 @@ def _windows_message_relation(
     relation_kind: str,
     extra: dict[str, object] | None = None,
 ) -> CodeFact:
-    payload = {
+    payload: dict[str, object] = {
         "relation_kind": relation_kind,
         "operation_kind": operation_kind,
         "caller_qualified_name": caller.qualified_name,
@@ -2837,8 +2836,8 @@ def _tinyusb_driver_callback_binding_facts(path: str, driver_entries: list[CodeF
     for entry in driver_entries:
         callbacks = dict(entry.payload.get("callbacks") or {})
         driver_class = str(entry.payload.get("driver_class") or entry.subject or "")
-        for field, symbol in callbacks.items():
-            if field == "name" or not _tinyusb_is_callback_symbol(symbol):
+        for callback_field, symbol in callbacks.items():
+            if callback_field == "name" or not _tinyusb_is_callback_symbol(symbol):
                 continue
             candidates = symbol_by_name.get(symbol, [])
             payload = {
@@ -2850,7 +2849,7 @@ def _tinyusb_driver_callback_binding_facts(path: str, driver_entries: list[CodeF
                 "usb_class": driver_class,
                 "class_name": driver_class,
                 "config_macro": entry.payload.get("config_macro"),
-                "callback_field": field,
+                "callback_field": callback_field,
                 "callback_symbol": symbol,
                 "callback_qualified_name": candidates[0].qualified_name if len(candidates) == 1 else symbol,
                 "candidate_qualified_names": [fn.qualified_name for fn in candidates] or [symbol],
@@ -3467,8 +3466,8 @@ def _tinyusb_host_driver_callback_binding_facts(path: str, host_entries: list[Co
     for entry in host_entries:
         callbacks = dict(entry.payload.get("callbacks") or {})
         driver_class = str(entry.payload.get("driver_class") or entry.subject or "")
-        for field, symbol in callbacks.items():
-            if field == "name" or not _tinyusb_is_callback_symbol(symbol):
+        for callback_field, symbol in callbacks.items():
+            if callback_field == "name" or not _tinyusb_is_callback_symbol(symbol):
                 continue
             candidates = symbol_by_name.get(symbol, [])
             payload = {
@@ -3480,7 +3479,7 @@ def _tinyusb_host_driver_callback_binding_facts(path: str, host_entries: list[Co
                 "usb_class": driver_class,
                 "class_name": driver_class,
                 "config_macro": entry.payload.get("config_macro"),
-                "callback_field": field,
+                "callback_field": callback_field,
                 "callback_symbol": symbol,
                 "callback_qualified_name": candidates[0].qualified_name if len(candidates) == 1 else symbol,
                 "candidate_qualified_names": [fn.qualified_name for fn in candidates] or [symbol],
@@ -3551,7 +3550,7 @@ def _tinyusb_host_endpoint_interface_bind_call_facts(path: str, text: str, model
         caller = _tinyusb_function_at_line(model, start_line)
         endpoint_map = _tinyusb_arg_containing(args, "ep2drv")
         interface_map = _tinyusb_arg_containing(args, "itf2drv")
-        payload = {
+        binding_payload: dict[str, Any] = {
             "relation_kind": "tinyusb_host_endpoint_interface_binding",
             "semantic_phase": "phase7_tinyusb_host_stack_semantics",
             "usb_role": "host",
@@ -3578,7 +3577,7 @@ def _tinyusb_host_endpoint_interface_bind_call_facts(path: str, text: str, model
             object="tu_bind_driver_to_ep_itf",
             confidence="high" if endpoint_map and interface_map else "medium",
             source="semantic_cpp_lightweight",
-            payload={k: v for k, v in payload.items() if v not in (None, [], {})},
+            payload={k: v for k, v in binding_payload.items() if v not in (None, [], {})},
         ))
     return facts
 
@@ -4012,7 +4011,7 @@ def _tinyusb_hid_class_protocol_facts(path: str, text: str, model: SemanticModel
             payload={k: v for k, v in payload.items() if v not in (None, [], {})},
         ))
     for lineno, kind, report_id in report_kinds_by_line:
-        payload = {
+        item_payload: dict[str, Any] = {
             "relation_kind": "tinyusb_hid_report_descriptor_item",
             "semantic_phase": "phase7_tinyusb_class_protocol_semantics",
             "usb_class": "HID",
@@ -4020,7 +4019,7 @@ def _tinyusb_hid_class_protocol_facts(path: str, text: str, model: SemanticModel
             "descriptor_kind": "hid_report",
             "report_kind": kind,
             "report_id": report_id,
-            "resolved_report_id": report_ids.get(report_id),
+            "resolved_report_id": report_ids.get(report_id) if report_id else None,
             "protocol_operation": "report_descriptor_item",
             "resolution_status": "semantic_relation",
             "unknown_type": "hid_report_descriptor_byte_layout_not_fully_validated",
@@ -4036,7 +4035,7 @@ def _tinyusb_hid_class_protocol_facts(path: str, text: str, model: SemanticModel
             object=kind,
             confidence="high",
             source="semantic_cpp_lightweight",
-            payload={k: v for k, v in payload.items() if v not in (None, [], {})},
+            payload={k: v for k, v in item_payload.items() if v not in (None, [], {})},
         ))
     for fn in model.functions:
         if fn.declaration_or_definition != "definition":
@@ -4045,7 +4044,7 @@ def _tinyusb_hid_class_protocol_facts(path: str, text: str, model: SemanticModel
             report_kind = _TINYUSB_HID_REPORT_API_KINDS[fn.name]
             fn_text = _tinyusb_function_text(lines, fn)
             calls_xfer = "usbd_edpt_xfer" in fn_text or "tud_hid_n_report" in fn_text
-            payload = {
+            api_payload: dict[str, Any] = {
                 "relation_kind": "tinyusb_hid_report_api",
                 "semantic_phase": "phase7_tinyusb_class_protocol_semantics",
                 "usb_class": "HID",
@@ -4072,11 +4071,11 @@ def _tinyusb_hid_class_protocol_facts(path: str, text: str, model: SemanticModel
                 object=report_kind,
                 confidence="high",
                 source="semantic_cpp_lightweight",
-                payload={k: v for k, v in payload.items() if v not in (None, [], {})},
+                payload={k: v for k, v in api_payload.items() if v not in (None, [], {})},
             ))
         if fn.name in _TINYUSB_HID_CONTROL_CALLBACKS:
             operation, direction = _TINYUSB_HID_CONTROL_CALLBACKS[fn.name]
-            payload = {
+            callback_payload: dict[str, Any] = {
                 "relation_kind": "tinyusb_hid_control_callback",
                 "semantic_phase": "phase7_tinyusb_class_protocol_semantics",
                 "usb_class": "HID",
@@ -4101,7 +4100,7 @@ def _tinyusb_hid_class_protocol_facts(path: str, text: str, model: SemanticModel
                 object=operation,
                 confidence="high",
                 source="semantic_cpp_lightweight",
-                payload={k: v for k, v in payload.items() if v not in (None, [], {})},
+                payload={k: v for k, v in callback_payload.items() if v not in (None, [], {})},
             ))
     return facts
 
@@ -4407,7 +4406,7 @@ def _tinyusb_pd_message_policy_facts(path: str, text: str, model: SemanticModel,
         fn_text = _tinyusb_function_text(lines, fn)
         weak = _tinyusb_function_has_prefix(lines, fn, "TU_ATTR_WEAK")
         if fn.name in {"tuc_pd_data_received_cb", "tuc_pd_control_received_cb"}:
-            payload = {
+            callback_payload: dict[str, Any] = {
                 "relation_kind": "tinyusb_pd_policy_callback",
                 "semantic_phase": "phase7_tinyusb_typec_pd_semantics",
                 "usb_role": "typec_pd",
@@ -4427,10 +4426,10 @@ def _tinyusb_pd_message_policy_facts(path: str, text: str, model: SemanticModel,
                 end_line=fn.end_line,
                 subject=fn.name,
                 predicate="declares_pd_policy_callback",
-                object=payload["callback_family"],
+                object=str(callback_payload["callback_family"]),
                 confidence="high",
                 source="semantic_cpp_lightweight",
-                payload={k: v for k, v in payload.items() if v not in (None, [], {})},
+                payload={k: v for k, v in callback_payload.items() if v not in (None, [], {})},
             ))
         if fn.name == "parse_msg_data" and "tuc_pd_data_received_cb" in fn_text:
             facts.append(_tinyusb_pd_dispatch_fact(path, fn, "dispatches_pd_data_message_callback", "tuc_pd_data_received_cb", "PD data message", "data_message"))
@@ -4438,7 +4437,7 @@ def _tinyusb_pd_message_policy_facts(path: str, text: str, model: SemanticModel,
             facts.append(_tinyusb_pd_dispatch_fact(path, fn, "dispatches_pd_control_message_callback", "tuc_pd_control_received_cb", "PD control message", "control_message"))
         if fn.name == "tuc_pd_data_received_cb":
             for msg in sorted(set(re.findall(r"\b(PD_DATA_[A-Z0-9_]+)\b", fn_text))):
-                payload = {
+                message_payload: dict[str, Any] = {
                     "relation_kind": "tinyusb_pd_data_policy_handler",
                     "semantic_phase": "phase7_tinyusb_typec_pd_semantics",
                     "usb_role": "typec_pd",
@@ -4463,7 +4462,7 @@ def _tinyusb_pd_message_policy_facts(path: str, text: str, model: SemanticModel,
                     object=msg,
                     confidence="high",
                     source="semantic_cpp_lightweight",
-                    payload={k: v for k, v in payload.items() if v not in (None, [], {})},
+                    payload={k: v for k, v in message_payload.items() if v not in (None, [], {})},
                 ))
         if fn.name == "tuc_pd_control_received_cb":
             for msg in sorted(set(re.findall(r"\b(PD_CTRL_[A-Z0-9_]+)\b", fn_text))):
@@ -4560,8 +4559,8 @@ def _tinyusb_pd_header_initializer(fn_text: str) -> dict[str, str]:
         return {}
     body = m.group("body")
     fields: dict[str, str] = {}
-    for field, value in re.findall(r"\.([A-Za-z_]\w*)\s*=\s*([^,}\n]+)", body):
-        fields[field.strip()] = value.strip()
+    for field_name, value in re.findall(r"\.([A-Za-z_]\w*)\s*=\s*([^,}\n]+)", body):
+        fields[field_name.strip()] = value.strip()
     return fields
 
 
@@ -4780,11 +4779,14 @@ def _tinyusb_descriptor_array_fact(path: str, array_name: str, span: tuple[int, 
 
 
 def _tinyusb_descriptor_macro_fact(path: str, lineno: int, macro_name: str, args: list[str], meta: dict[str, object], descriptor_array: str | None, symbol_values: dict[str, object]) -> CodeFact:
-    arg_names = tuple(meta.get("arg_names") or ())
+    raw_arg_names = meta.get("arg_names")
+    arg_names = tuple(item for item in raw_arg_names if isinstance(item, str)) if isinstance(raw_arg_names, (list, tuple)) else ()
     named_args = {name: args[index] for index, name in enumerate(arg_names) if index < len(args)}
     resolved_args = {name: _resolve_tinyusb_descriptor_arg(value, symbol_values) for name, value in named_args.items()}
-    interface_arg_names = tuple(meta.get("interface_arg_names") or ())
-    endpoint_arg_names = tuple(meta.get("endpoint_arg_names") or ())
+    raw_interface_arg_names = meta.get("interface_arg_names")
+    interface_arg_names = tuple(item for item in raw_interface_arg_names if isinstance(item, str)) if isinstance(raw_interface_arg_names, (list, tuple)) else ()
+    raw_endpoint_arg_names = meta.get("endpoint_arg_names")
+    endpoint_arg_names = tuple(item for item in raw_endpoint_arg_names if isinstance(item, str)) if isinstance(raw_endpoint_arg_names, (list, tuple)) else ()
     interface_symbols = [named_args[name] for name in interface_arg_names if name in named_args]
     endpoint_symbols = [named_args[name] for name in endpoint_arg_names if name in named_args]
     usb_class = str(meta.get("usb_class") or "")
@@ -5058,19 +5060,6 @@ def _macro_invocation_arg_texts(line: str, macro_name: str) -> list[str]:
         out.append(line[pos + 1:end])
         start = end + 1
     return out
-
-
-def _matching_paren_index(text: str, open_index: int) -> int | None:
-    depth = 0
-    for index in range(open_index, len(text)):
-        char = text[index]
-        if char == "(":
-            depth += 1
-        elif char == ")":
-            depth -= 1
-            if depth == 0:
-                return index
-    return None
 
 
 _UI_RESOURCE_RELATION_PREDICATES = {
@@ -5600,7 +5589,6 @@ def _resolve_dispatch_handler_qname(
 
 def _callback_relations_from_line(path: str, caller: FunctionInfo, lineno: int, line: str, symbols: list[FunctionInfo]) -> list[CodeFact]:
     facts: list[CodeFact] = []
-    symbol_names = {s.name for s in symbols}
     for m in re.finditer(r"\b(?P<api>[A-Za-z_]\w*(?:register|Register|callback|Callback)[A-Za-z_]*)\s*\((?P<args>[^()]*)\)", line):
         args = _split_top_level_commas(m.group("args")) if m.group("args").strip() else []
         for arg in args:
@@ -6775,16 +6763,6 @@ def _port_advanced_response_constraint(predicate: str, function: str, noun: str)
     return f"{function} has FreeRTOS advanced port semantics evidence; qualify target-specific behavior."
 
 
-def _dedupe_strings(values: list[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for value in values:
-        if value and value not in seen:
-            seen.add(value)
-            out.append(value)
-    return out
-
-
 _KERNEL_OBJECT_SEMANTICS: dict[str, tuple[str, str, str, str, str]] = {
     # predicate: (object, category, operation_kind, default_context, response noun)
     "sends_to_stream_buffer": ("stream_buffer", "stream_buffer", "send_stream_buffer", "task", "stream-buffer send"),
@@ -7041,7 +7019,6 @@ def _callback_storage_and_invocation_relations_from_line(path: str, caller: Func
     separate registration/storage relation can prove it.
     """
     facts: list[CodeFact] = []
-    symbol_by_name = {s.name: s for s in symbols}
 
     def callback_like(name: str) -> bool:
         return bool(re.search(r"callback|Callback|handler|Handler|function|Function", name))
@@ -7131,7 +7108,6 @@ def _update_function_pointer_assignments(line: str, symbols: list[FunctionInfo],
 
 
 def _callback_table_relations(path: str, lines: list[str], symbols: list[FunctionInfo]) -> list[CodeFact]:
-    symbol_names = {s.name for s in symbols}
     facts: list[CodeFact] = []
     for lineno, line in enumerate(lines, start=1):
         if "{" not in line or "}" not in line or "=" not in line:

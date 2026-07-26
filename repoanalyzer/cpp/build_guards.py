@@ -64,7 +64,7 @@ def _extract_legacy_guard_blocks(path: str, text: str, macros: Mapping[str, str 
 
 def _guard_block_fact(path: str, frame: _LegacyFrame, end_line: int, macros: Mapping[str, str | None]) -> CodeFact:
     evaluation = eval_guard_detailed(frame.directive, frame.expression, macros)
-    payload = {
+    payload: dict[str, object] = {
         "kind": "guard_block",
         "directive": frame.directive,
         "expression": frame.expression,

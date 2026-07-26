@@ -2,10 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from repoanalyzer.claim_eval.matchers import evaluate_verdict
 from repoanalyzer.evidence.claims import ClaimEvidenceBundle, ClaimVerdict
-from repoanalyzer.evidence_eval.matchers import evaluate_bundle
-from repoanalyzer.workflow_eval.matchers import evaluate_trace
 
 
 def evaluate_claim_bundle(bundle: ClaimEvidenceBundle, expected: dict[str, Any]) -> dict[str, Any]:

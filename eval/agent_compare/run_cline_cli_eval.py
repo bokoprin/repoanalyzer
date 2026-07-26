@@ -5,9 +5,8 @@ import csv
 import json
 import os
 import re
-import subprocess
-import sys
 import shutil
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +22,7 @@ CLINE_ANSWERS = OUTPUT_DIR / "tinyusb_answers_cline.jsonl"
 EVENTS_DIR = OUTPUT_DIR / "cline_events"
 MODEL = "qwen3.6:27b_q4_k_s"
 RUN_ID = "cline-cli-golden-20260627"
+TINYUSB_REPO_ENV = "REPOANALYZER_TINYUSB_REPO"
 SYSTEM_PROMPT = (
     "Follow the Cline Rules. For TinyUSB source-code questions, use repoanalyzer-tinyusb MCP first. "
     "Return exactly one JSON object and no Markdown."
@@ -53,7 +53,18 @@ def ensure_dirs() -> None:
     MCP_SETTINGS.parent.mkdir(parents=True, exist_ok=True)
 
 
+def resolve_tinyusb_repo() -> Path:
+    configured = os.environ.get(TINYUSB_REPO_ENV)
+    if not configured:
+        raise RuntimeError(f"Set {TINYUSB_REPO_ENV} to the TinyUSB checkout path")
+    repo = Path(configured).expanduser().resolve()
+    if not repo.is_dir():
+        raise RuntimeError(f"{TINYUSB_REPO_ENV} does not point to a directory")
+    return repo
+
+
 def ensure_mcp_settings() -> None:
+    tinyusb_repo = resolve_tinyusb_repo()
     settings = {
         "mcpServers": {
             "repoanalyzer-tinyusb": {
@@ -64,7 +75,7 @@ def ensure_mcp_settings() -> None:
                         "-m",
                         "repoanalyzer.mcp.server",
                         "--repo",
-                        r"C:\shinsuke\app\tinyusb",
+                        str(tinyusb_repo),
                     ],
                 },
                 "disabled": False,

@@ -452,40 +452,40 @@ def answer_constraints_from_facts(facts: Iterable[CodeFact]) -> AnswerConstraint
                 assembly_boundary_functions.append(port_function)
             if "vector_table_unverified" in unknown_types and port_function:
                 vector_table_unverified_functions.append(port_function)
-            label = f"{caller} -> {callee}" if caller and callee and callee != "port_layer" else (port_function or "FreeRTOS port boundary")
-            constraints.append(_scope_prefix(profile) + f"When discussing {label}, state that it reaches a FreeRTOS port layer boundary ({boundary_kind}); do not claim behavior beyond the boundary without port/startup/assembly evidence.")
-            qualifications.append(f"Qualify {label} as target-port dependent evidence.")
-            obligations.append(f"Preserve port-boundary unknowns for {label}, including assembly/vector/startup limits when present.")
+            boundary_label = f"{caller} -> {callee}" if caller and callee and callee != "port_layer" else (port_function or "FreeRTOS port boundary")
+            constraints.append(_scope_prefix(profile) + f"When discussing {boundary_label}, state that it reaches a FreeRTOS port layer boundary ({boundary_kind}); do not claim behavior beyond the boundary without port/startup/assembly evidence.")
+            qualifications.append(f"Qualify {boundary_label} as target-port dependent evidence.")
+            obligations.append(f"Preserve port-boundary unknowns for {boundary_label}, including assembly/vector/startup limits when present.")
 
         build_status = str(payload.get("build_status") or "active")
         guard_chain = payload.get("build_guard_chain") or []
         if isinstance(guard_chain, list) and guard_chain:
-            label = _fact_label(fact) or fact.path
-            condition = _condition_summary(fact, label, build_status)
+            condition_label = _fact_label(fact) or fact.path
+            condition = _condition_summary(fact, condition_label, build_status)
             if condition:
                 build_conditions.append(condition)
                 expressions = ", ".join(condition.get("guard_expressions") or [])
                 macro_text = _macro_text(condition.get("macro_values") or {})
                 if expressions:
-                    constraints.append(_scope_prefix(profile) + f"When explaining why {label} is {build_status}, cite build guard {expressions}{macro_text}.")
-                    obligations.append(f"Preserve the build-condition provenance for {label}; do not only state {build_status} without the guard reason.")
+                    constraints.append(_scope_prefix(profile) + f"When explaining why {condition_label} is {build_status}, cite build guard {expressions}{macro_text}.")
+                    obligations.append(f"Preserve the build-condition provenance for {condition_label}; do not only state {build_status} without the guard reason.")
 
         if build_status in {"inactive", "conditional"} and fact.fact_type != "target_file":
-            label = _fact_label(fact)
+            build_label = _fact_label(fact)
             if build_status == "inactive":
                 inactive_files.append(fact.path)
-                if label:
-                    inactive_symbols.append(label)
-                constraints.append(_scope_prefix(profile) + f"Treat evidence for {label or fact.path} as inactive in the target build, not active runtime behavior.")
-                qualifications.append(f"Qualify {label or fact.path} as inactive for the indexed target profile.")
-                obligations.append(f"Separate source-visible evidence for {label or fact.path} from target-active behavior.")
+                if build_label:
+                    inactive_symbols.append(build_label)
+                constraints.append(_scope_prefix(profile) + f"Treat evidence for {build_label or fact.path} as inactive in the target build, not active runtime behavior.")
+                qualifications.append(f"Qualify {build_label or fact.path} as inactive for the indexed target profile.")
+                obligations.append(f"Separate source-visible evidence for {build_label or fact.path} from target-active behavior.")
             else:
                 conditional_files.append(fact.path)
-                if label:
-                    conditional_symbols.append(label)
-                constraints.append(_scope_prefix(profile) + f"Treat evidence for {label or fact.path} as conditional build evidence; do not state it is definitely active.")
-                qualifications.append(f"Qualify {label or fact.path} as conditional for the indexed target profile.")
-                obligations.append(f"Mention unresolved/conditional build guards for {label or fact.path}.")
+                if build_label:
+                    conditional_symbols.append(build_label)
+                constraints.append(_scope_prefix(profile) + f"Treat evidence for {build_label or fact.path} as conditional build evidence; do not state it is definitely active.")
+                qualifications.append(f"Qualify {build_label or fact.path} as conditional for the indexed target profile.")
+                obligations.append(f"Mention unresolved/conditional build guards for {build_label or fact.path}.")
 
     api_context_pairs = _api_context_pairs(api_contexts)
     for pair in api_context_pairs:
@@ -509,7 +509,7 @@ def answer_constraints_from_facts(facts: Iterable[CodeFact]) -> AnswerConstraint
             qualifications.insert(0, "Qualify build-sensitive claims by the target profile that produced each piece of evidence.")
             obligations.insert(0, "Keep target-profile-specific evidence separated in the answer.")
 
-    context = AnswerBuildContext(
+    build_context = AnswerBuildContext(
         target_profiles=target_profiles,
         macros=dict(sorted(macros.items())),
         active_files=_dedupe(active_files),
@@ -570,7 +570,7 @@ def answer_constraints_from_facts(facts: Iterable[CodeFact]) -> AnswerConstraint
         response_constraints=_dedupe(constraints),
         required_qualifications=_dedupe(qualifications),
         answer_obligations=_dedupe(obligations),
-        build_context=context,
+        build_context=build_context,
     )
 
 

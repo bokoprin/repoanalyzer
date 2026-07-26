@@ -194,12 +194,12 @@ def snapshot_coverage_gap_report_cmd(
         raise typer.Exit(code=1)
 
 
-def _parse_checkout_root_options(values: list[str] | None) -> dict[str, str] | str | None:
+def _parse_checkout_root_options(values: list[str] | None) -> dict[str, str | Path] | str | Path | None:
     if not values:
         return None
     if len(values) == 1 and "=" not in values[0]:
         return values[0]
-    parsed: dict[str, str] = {}
+    parsed: dict[str, str | Path] = {}
     for value in values:
         if "=" not in value:
             raise typer.BadParameter("Use repo=PATH when passing multiple --checkout-root values.")

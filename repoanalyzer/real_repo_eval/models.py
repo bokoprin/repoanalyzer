@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, is_dataclass, asdict
-from typing import Any
+from typing import Any, cast
 
 
 def _to_dict(value: Any) -> Any:
     if hasattr(value, "to_dict"):
         return value.to_dict()
     if is_dataclass(value):
-        return _to_dict(asdict(value))
+        return _to_dict(asdict(cast(Any, value)))
     if isinstance(value, list):
         return [_to_dict(item) for item in value]
     if isinstance(value, dict):
